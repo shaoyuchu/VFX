@@ -5,7 +5,7 @@ from matplotlib import image
 import matplotlib.pyplot as plt
 
 def parse_shutter_speed(filename):
-    # eg. '1_8.JPG' -> 0.125
+    # eg. './bridge/1_8.JPG' -> 0.125
     segments = filename.replace('.', '_').replace('/', '_').split('_')
     return int(segments[-3]) / int(segments[-2])
 
@@ -35,7 +35,31 @@ class HDR:
         self.height = values.shape[1]
         self.width = values.shape[2]
     
-    def sample_pixels(self, n_sample):
+    def __close_to_center(self, rs, cs, radius):
+        # compute the Manhattan distances to the center
+        # select one random point with dist < min(height, width)*radius or the one closest to the center
+        center_r = self.height / 2
+        center_c = self.width / 2
+        thresh = np.min([center_r, center_c]) * radius
+
+        # shuffle
+        permutation = np.random.permutation(rs.shape[0])
+        rs = rs[permutation]
+        cs = cs[permutation]
+        
+        # search
+        best_dist = np.inf
+        best_idx = -1
+        for index, (r, c) in enumerate(zip(rs, cs)):
+            dist = np.abs(r - center_r) + np.abs(c - center_c)
+            if dist < thresh:
+                return r, c
+            elif dist < best_dist:
+                best_dist = dist
+                best_idx = index
+        return rs[best_idx], cs[best_idx]
+    
+    def sample_pixels(self, n_sample, sample_radius=0.8, plot_hist=False, visualize_sample_pt=False):
         # compute the variance of values in all images
         variances = np.array([])
         for i in range(self.n_image):
@@ -43,43 +67,31 @@ class HDR:
             variances = np.append(variances, np.var(all_value))
         
         # select the image with the largest variance
-        self.sample_img_idx = np.argmax(variances)
+        sample_img_idx = np.argmax(variances)
 
-        # select pixels with both high and low values
+        # compute the values with evenly spread percentiles
         percentiles = np.linspace(0, 100, num=n_sample)
-        sample_values = np.percentile(self.values[self.sample_img_idx], percentiles, interpolation='nearest')
-        self.sample_pt = []
+        sample_values = np.percentile(self.values[sample_img_idx], percentiles, interpolation='nearest')
+        if plot_hist:
+            plt.clf()
+            plt.hist(self.values[sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
+            for i in range(len(sample_values)):
+                plt.axvline(sample_values[i], color='k', linestyle='dashed', linewidth=0.5)
+            plt.show()
+
+        # select pixels with both high and low values and avoid those on the edges
+        self.sample_pts = []
         for value in sample_values:
-            occurances = np.where(self.values[self.sample_img_idx] == value)
-            r, c = self.closest_to_center(occurances[0], occurances[1])
-            self.sample_pt.append((r, c))
-        print(self.sample_pt)
-        
-        for r, c in self.sample_pt:
-            plt.scatter(c, r, color='red', s=2)
-        plt.imshow(self.values[self.sample_img_idx])
-        plt.show()
+            occurances = np.where(self.values[sample_img_idx] == value)
+            r, c = self.__close_to_center(occurances[0], occurances[1], sample_radius)
+            self.sample_pts.append((r, c))
+        if visualize_sample_pt:
+            plt.clf()
+            for r, c in self.sample_pts:
+                plt.scatter(c, r, color='red', s=1)
+            plt.imshow(self.values[sample_img_idx])
+            plt.show()
 
-        # # visualize sampled values
-        # plt.hist(self.values[self.sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
-        # for i in range(len(sample_values)):
-        #     plt.axvline(sample_values[i], color='k', linestyle='dashed', linewidth=1)
-        # plt.show()
-    
-    def closest_to_center(self, rs, cs):
-        center_h = self.height / 2
-        center_w = self.width / 2
-        best_dist = np.inf
-        best_idx = -1
-        for index, (r, c) in enumerate(zip(rs, cs)):
-            dist = np.abs(r - center_h) + np.abs(c - center_w)
-            if dist < best_dist:
-                best_dist = dist
-                best_idx = index
-        return rs[best_idx], cs[best_idx]
-
-
-            
 
 
 
@@ -91,6 +103,7 @@ class HDR:
 # save as .hdr
 
 n_sample_pt = 50
+sample_radius = 0.8
 
 if __name__ == '__main__':
 
@@ -107,7 +120,7 @@ if __name__ == '__main__':
 
     # HDR of channel G
     hdr = HDR(shutter, all_g)
-    hdr.sample_pixels(n_sample_pt)
+    hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, visualize_sample_pt=True)
 
 
 
