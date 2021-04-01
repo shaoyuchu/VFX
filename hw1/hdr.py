@@ -185,8 +185,8 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'SocialScienceLibrary_aligned'
-n_sample_pt = 50
+image_type = 'cosmology_hall'
+n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100
 plot_all_response_curves = True
