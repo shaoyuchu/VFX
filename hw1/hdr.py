@@ -24,7 +24,7 @@ def read_images(image_paths):
     all_R = np.array(all_R)
     return all_B, all_G, all_R
 
-
+# ---------------------------------------- HDR class ----------------------------------------
 class HDR:
 
     def __init__(self, shutter_speed, values):
@@ -76,7 +76,7 @@ class HDR:
             raise RuntimeError(f'Invalid value {value}.')
         return min(value - z_min, z_max - value)
 
-    def sample_pixels(self, n_sample, sample_radius=0.8, plot_hist=False, visualize_sample_pt=False):
+    def sample_pixels(self, n_sample, sample_radius=0.8, show_hist=False, show_sample_pt=False):
         # compute the variance of values in all images
         variances = np.array([])
         for i in range(self.n_image):
@@ -89,7 +89,7 @@ class HDR:
         # compute the values with evenly spread percentiles
         percentiles = np.linspace(0, 100, num=n_sample)
         sample_values = np.percentile(self.values[sample_img_idx], percentiles, interpolation='nearest')
-        if plot_hist: 
+        if show_hist: 
             plt.clf()
             plt.hist(self.values[sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
             for i in range(len(sample_values)):
@@ -103,7 +103,7 @@ class HDR:
             occurances = np.where(self.values[sample_img_idx] == value)
             r, c = self.__close_to_center(occurances[0], occurances[1], sample_radius)
             self.sample_pts.append((r, c))
-        if visualize_sample_pt:
+        if show_sample_pt:
             plt.clf()
             for r, c in self.sample_pts:
                 plt.scatter(c, r, color='red', s=1)
@@ -159,8 +159,8 @@ class HDR:
 
         return self.inv_response_curve
     
-    def radiance_map(self, plot_radiance=False):
-        print('Computing radiance map...')
+    def radiance_map(self, show_radiance=False):
+        print('Computing radiance map...\n')
 
         # compute weighted average of irradiance
         w = np.vectorize(self.__weight)(self.values)
@@ -175,20 +175,17 @@ class HDR:
         self.irradiance = np.exp(self.ln_irradiance)
 
         # plot radiance map
-        if plot_radiance:
+        if show_radiance:
             plt.clf()
             plt.imshow(self.ln_irradiance, cmap='rainbow')
             plt.colorbar()
             plt.show()
-        
 
-# V read images
-# V sample Eij
-# V construct linear system
-# V solve linear system, get inverse of response curve
-# V construct HDR radiance map
-# save as .hdr
+# ---------------------------------------- end of HDR class ----------------------------------------
 
+input_image_dir = './input_images/'
+output_image_path = './output_images/'
+image_type = 'SocialScienceLibrary_aligned'
 n_sample_pt = 50
 sample_radius = 0.8
 smoothing_lambda = 100
@@ -198,9 +195,8 @@ plot_all_radiance_map = True
 if __name__ == '__main__':
 
     # read images
-    input_image_dir = './input_images/SocialScienceLibrary_aligned/'
-    input_image_paths = os.listdir(input_image_dir)
-    input_image_paths = list(map(lambda f: input_image_dir+f, input_image_paths))
+    input_image_paths = os.listdir(f'{input_image_dir}{image_type}/')
+    input_image_paths = list(map(lambda f: f'{input_image_dir}{image_type}/{f}', input_image_paths))
     input_image_paths = list(filter(lambda f: (f.endswith('.JPG') or f.endswith('.png')), input_image_paths))
     all_b, all_g, all_r = read_images(input_image_paths)
     
@@ -210,15 +206,31 @@ if __name__ == '__main__':
     # HDR compute response curves and radiance map
     all_inv_response_curves = []
     all_ln_irradiance = []
+    all_irradiance = []
     color_channels = ['blue', 'green', 'red']
     for channel, color in [(all_b, color_channels[0]), (all_g, color_channels[1]), (all_r, color_channels[2])]:
-        print(f'\nComputing channel {color}...')
+        print(f'Computing channel {color}...')
         hdr = HDR(shutter, channel)
-        hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, plot_hist=False, visualize_sample_pt=False)
+        hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, show_hist=False, show_sample_pt=False)
         hdr.compute_inv_response_curve(smoothing_lambda, visualize_g=False)
-        hdr.radiance_map(plot_radiance=False)
+        hdr.radiance_map(show_radiance=False)
         all_inv_response_curves.append(hdr.inv_response_curve)
         all_ln_irradiance.append(hdr.ln_irradiance)
+        all_irradiance.append(hdr.irradiance)
+    
+    # create directory if not exist
+    if not os.path.exists(output_image_path):
+        os.makedirs(output_image_path)
+    sub_directory = f'{output_image_path}{image_type}/'
+    if not os.path.exists(sub_directory):
+        os.makedirs(sub_directory)
+
+    # save .hdr image
+    result_file_name = f'{output_image_path}{image_type}/hdr_result.hdr'
+    height, width = all_irradiance[0].shape
+    rgb = np.stack(tuple(all_irradiance), axis=-1)
+    cv2.imwrite(result_file_name, rgb)
+    print(f'{result_file_name} saved')
     
     # plot response curves
     if plot_all_response_curves:
@@ -229,9 +241,12 @@ if __name__ == '__main__':
         for i in range(3):
             plt.plot(all_inv_response_curves[i], np.arange(256), label=color_channels[i], c=color_channels[i])
         plt.legend()
-        plt.savefig('response_curves.png')
+        file_name = f'{output_image_path}{image_type}/response_curves.png'
+        plt.savefig(file_name)
+        print(f'{file_name} saved')
     
     # plot radiance maps
+    all_ln_irradiance = np.array(all_ln_irradiance)
     v_min = np.min(all_ln_irradiance)
     v_max = np.max(all_ln_irradiance)
     if plot_all_radiance_map:
@@ -241,4 +256,6 @@ if __name__ == '__main__':
             plt.colorbar()
             plt.axis('off')
             plt.title(color_channels[i])
-            plt.savefig(f'radiance_map_{color_channels[i]}.png')
+            file_name = f'{output_image_path}{image_type}/radiance_map_{color_channels[i]}.png'
+            plt.savefig(file_name)
+            print(f'{file_name} saved')
