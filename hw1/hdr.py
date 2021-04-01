@@ -35,6 +35,9 @@ class HDR:
         self.n_image = values.shape[0]
         self.height = values.shape[1]
         self.width = values.shape[2]
+        print(f'Create HDR image with {self.values.shape[0]} images of shape ({self.height}, {self.width})')
+        print('ln shutter speed:')
+        print(self.ln_shutter_speed)
     
     def __close_to_center(self, rs, cs, radius):
         # compute the distances to the center
@@ -81,14 +84,14 @@ class HDR:
             variances = np.append(variances, np.var(all_value))
         
         # select the image with the largest variance
-        self.sample_img_idx = np.argmax(variances)
+        sample_img_idx = np.argmax(variances)
 
         # compute the values with evenly spread percentiles
         percentiles = np.linspace(0, 100, num=n_sample)
-        sample_values = np.percentile(self.values[self.sample_img_idx], percentiles, interpolation='nearest')
+        sample_values = np.percentile(self.values[sample_img_idx], percentiles, interpolation='nearest')
         if plot_hist: 
             plt.clf()
-            plt.hist(self.values[self.sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
+            plt.hist(self.values[sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
             for i in range(len(sample_values)):
                 plt.axvline(sample_values[i], color='k', linestyle='dashed', linewidth=0.5)
             plt.show()
@@ -97,20 +100,20 @@ class HDR:
         self.n_sample = n_sample
         self.sample_pts = []
         for value in sample_values:
-            occurances = np.where(self.values[self.sample_img_idx] == value)
+            occurances = np.where(self.values[sample_img_idx] == value)
             r, c = self.__close_to_center(occurances[0], occurances[1], sample_radius)
             self.sample_pts.append((r, c))
         if visualize_sample_pt:
             plt.clf()
             for r, c in self.sample_pts:
                 plt.scatter(c, r, color='red', s=1)
-            plt.imshow(self.values[self.sample_img_idx])
+            plt.imshow(self.values[sample_img_idx])
             plt.show()
         
         # construct self.z
         self.__construct_Z()
     
-    def response_curve(self, smoothing_lambda, visualize_g=False):
+    def compute_inv_response_curve(self, smoothing_lambda, visualize_g=False):
         mat_A = np.zeros((self.n_image*self.n_sample + 255, 256 + self.n_sample), dtype=np.float64)
         mat_b = np.zeros((mat_A.shape[0], 1), dtype=np.float64)
         print('mat_A.shape:', mat_A.shape)
@@ -143,22 +146,41 @@ class HDR:
         # solve the linear system
         pseudo_inv_A = np.linalg.pinv(mat_A)
         x = np.dot(pseudo_inv_A, mat_b)
-        inv_response_curve = x[:256, 0]
+        self.inv_response_curve = x[:256, 0]
 
         # visualization
         if visualize_g:
             plt.clf()
-            plt.scatter(inv_response_curve, np.arange(0, 256))
+            plt.scatter(self.inv_response_curve, np.arange(0, 256))
             plt.title('Response Curve')
             plt.xlabel('log exposure (E_i * (delta t)_j)')
             plt.ylabel('pixel value (Z_ij)')
             plt.show()
 
-        return inv_response_curve
+        return self.inv_response_curve
+    
+    def radiance_map(self, plot_radiance=False):
+        print('Computing radiance map...')
+
+        # compute weighted average of irradiance
+        w = np.vectorize(self.__weight)(self.values)
+        ln_t = np.array(list(map(lambda t: np.full_like(self.values[0], t, dtype=np.float64), self.ln_shutter_speed)))
+        g_z = np.vectorize(lambda v: self.inv_response_curve[v])(self.values)
+        weighted_sum = np.mean(w * (g_z - ln_t), axis=0)
+        total_weight = np.mean(w, axis=0)
+        self.ln_irradiance = np.zeros((self.height, self.width), dtype=np.float64)      
+        for r in range(self.height):
+            for c in range(self.width):
+                self.ln_irradiance[r, c] = 0 if total_weight[r, c] == 0 else weighted_sum[r, c] / total_weight[r, c]
+        self.irradiance = np.exp(self.ln_irradiance)
+
+        # plot radiance map
+        if plot_radiance:
+            plt.clf()
+            plt.imshow(self.ln_irradiance, cmap='rainbow')
+            plt.colorbar()
+            plt.show()
         
-
-
-
 
 # V read images
 # V sample Eij
@@ -170,12 +192,12 @@ class HDR:
 n_sample_pt = 50
 sample_radius = 0.8
 smoothing_lambda = 100
-plot_all_response_curves = True
+plot_all_response_curves = False
 
 if __name__ == '__main__':
 
     # read images
-    input_image_dir = './input_images/corner/'
+    input_image_dir = './input_images/SocialScienceLibrary_aligned/'
     input_image_paths = os.listdir(input_image_dir)
     input_image_paths = list(map(lambda f: input_image_dir+f, input_image_paths))
     input_image_paths = list(filter(lambda f: (f.endswith('.JPG') or f.endswith('.png')), input_image_paths))
@@ -183,9 +205,8 @@ if __name__ == '__main__':
     
     # parse shutter speed
     shutter = np.array(list(map(parse_shutter_speed, input_image_paths)))
-    print('Shutter speed:\n', shutter, '\n')
 
-    # HDR compute response curves
+    # HDR compute response curves and radiance map
     plt.clf()
     plt.title('Response Curves')
     plt.xlabel('log exposure (E_i * (delta t)_j)')
@@ -194,8 +215,11 @@ if __name__ == '__main__':
         print(f'Computing channel {color}...')
         hdr = HDR(shutter, channel)
         hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, plot_hist=False, visualize_sample_pt=False)
-        inv_response_curve = hdr.response_curve(smoothing_lambda, visualize_g=False)
-        plt.plot(inv_response_curve, np.arange(0, 256), label=color, c=color)
+        hdr.compute_inv_response_curve(smoothing_lambda, visualize_g=False)
+        hdr.radiance_map(plot_radiance=True)
+        plt.plot(hdr.inv_response_curve, np.arange(0, 256), label=color, c=color)
+        break
+        
     if plot_all_response_curves:
         plt.legend()
         plt.show()
