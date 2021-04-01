@@ -1,4 +1,4 @@
-# project #1: High Dynamic Range Imaging
+# Project #1: High Dynamic Range Imaging
 ### Group member
 - 資管四 B06705028 朱紹瑜
 - 資工所碩一 R09922063 鄭筠庭
@@ -20,7 +20,7 @@ Call `ComputeBitmaps()` to get *threshold_bitmap* and *exclusion_bitmap* of the 
 Shift the target image to its 9 neighbors' location with `cv2.warpAffine`, and compare the error value for each location.  
 The fundamental idea is to calculate`(BaselineImage) XOR (TargetImage) AND (exclusion_bitmap)` as error value. XOR for taking difference, AND with exclusion maps to reduce noise.   
 
-**Step 4: Shift the image to complete alignment**
+**Step 4: Shift the image to complete alignment**  
 Find the shift direction that creates the least amount of error, store the shifting value and pass it down the image pyramid. Repeat Step 3 until we get the shifting value for original sized image. Use `cv2.warpAffine` to align the soure images and save them to the output folder.
 
 
