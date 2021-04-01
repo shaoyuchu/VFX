@@ -2,20 +2,48 @@ import cv2
 import numpy as np
 import glob
 import os
+from PIL import Image
+from fractions import Fraction
 
 def readImages(folder):
 	imageFormat = ['png', 'JPG']
 	files = []
-	imageNames = []
 	# Read in images
 	[files.extend(glob.glob(folder + '*.' + e)) for e in imageFormat]
 	imageList = [cv2.imread(file) for file in sorted(files)]
-	# Get image names. Will use these names when saving result images
-	for name in sorted(files):
-		name = (name.split('/')[2])
-		imageNames.append(name)
+
+	# Get image exposure time from metadata
+	exposureTimeList = []
+	images = glob.glob(folder+"*.JPG")
+	for image in sorted(images):
+		with open(image, 'rb') as file:
+			tempImage = Image.open(file)
+			exifdata = tempImage.getexif()
+			#  0x829A: "ExposureTime"
+			data = exifdata.get(0x829A)
+			if isinstance(data, bytes):
+				data = data.decode()
+			dataValue = data[0] / data[1]
+			dataValue = Fraction(dataValue).limit_denominator()
+
+			if dataValue>=1:
+				dataValueString = str(dataValue)+'_1.JPG'
+			else:
+				dataValueArray = str(dataValue).split('/')
+				dataValueString = str(dataValueArray[0]) + '_' + str(dataValueArray[1]) + '.JPG'
+			exposureTimeList.append(dataValueString)
+	print(exposureTimeList)
+
+	# # Get image names. Will use these names when saving result images
+	# imageNames = []
+	# for name in sorted(files):
+	# 	name = (name.split('/')[2])
+	# 	imageNames.append(name)
+
 	grayscaleList = turnGrayscale(imageList)
-	return imageList, grayscaleList, imageNames
+	return imageList, grayscaleList, exposureTimeList
+
+
 
 
 # Show image on screen
