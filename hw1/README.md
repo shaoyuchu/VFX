@@ -25,5 +25,27 @@ Find the shift direction that creates the least amount of error, store the shift
 
 
 ## HDR
+Reference paper: [Recovering high dynamic range radiance maps from photographs](https://dl.acm.org/doi/10.1145/258734.258884)
+
+**Step 1: Sample pixels**
+The original image set contains 13 images with shutter speed ranging from 1/128 to 32. To sample pixels with various irradiance, we target at the image with the largest value variance. Within the targeted image, we select pixels with values locating at the 0, 2, ..., 100 percentile. Moreover, to be invulnerable of the appended margin after alignment, pixels on the edges are avoid. A total of 51 pixel positions are sampled.
+
+(figure with sampled positions)
+
+**Step 2: Compute Log Inverse of the Response Curve**
+
+To recover the response curve, we minimize the following function:
+$$
+\min_{g, E} O = \min_{g, E} \sum_{i=1}^N \sum_{j=1}^P \{w(Z_{ij})[g(Z_{ij}) - \ln E_i - \ln \Delta t_j]\}^2 + \lambda \sum_{z=0}^{255}[w(z) g^{\prime \prime}(z)],
+$$
+where $Z_{ij}$ is the intensity of the $i$-th sampled pixel in the $j$-th image, $E_i$ is the irradiance at the position of the $i$-th sampled pixel, $\Delta t_j$ is the shutter speed of the exposure time of the $j$-th image, $\lambda$ is the smoothing coefficient, $g(\cdot)$ is the log inverse of the response curve, and $w(\cdot)$ is the weight function with
+$$
+w(z) = \min\{z, 255-z\}.
+$$
+We solve the optimization problem above with the least square method by constructing a linear system as mentioned in the lecture.  
+
+
+
 
 ## Tone mapping
+
