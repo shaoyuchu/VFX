@@ -189,7 +189,7 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'SocialScienceLibrary_aligned'
+image_type = 'main_library'
 n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100
