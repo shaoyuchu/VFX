@@ -82,12 +82,10 @@ class HDR:
         
         # select the image with the largest variance
         self.sample_img_idx = np.argmax(variances)
-        print(f'Sample pixels based on image with index {self.sample_img_idx}')
 
         # compute the values with evenly spread percentiles
         percentiles = np.linspace(0, 100, num=n_sample)
         sample_values = np.percentile(self.values[self.sample_img_idx], percentiles, interpolation='nearest')
-        print(f'Sampled pixel values:\n{sample_values}\n')
         if plot_hist: 
             plt.clf()
             plt.hist(self.values[self.sample_img_idx].reshape(-1), bins=np.arange(0, 260, 5))
@@ -111,7 +109,6 @@ class HDR:
         
         # construct self.z
         self.__construct_Z()
-        print(f'Z:\n{self.z}\n')
     
     def response_curve(self, smoothing_lambda, visualize_g=False):
         mat_A = np.zeros((self.n_image*self.n_sample + 255, 256 + self.n_sample), dtype=np.float64)
@@ -144,7 +141,6 @@ class HDR:
             cur_r += 1
 
         # solve the linear system
-        print('Computing the response curve...')
         pseudo_inv_A = np.linalg.pinv(mat_A)
         x = np.dot(pseudo_inv_A, mat_b)
         inv_response_curve = x[:256, 0]
@@ -166,14 +162,15 @@ class HDR:
 
 # V read images
 # V sample Eij
-# construct linear system
-# solve linear system, get inverse of response curve
+# V construct linear system
+# V solve linear system, get inverse of response curve
 # construct HDR radiance map
 # save as .hdr
 
 n_sample_pt = 50
 sample_radius = 0.8
-smoothing_lambda = 50
+smoothing_lambda = 100
+plot_all_response_curves = True
 
 if __name__ == '__main__':
 
@@ -188,9 +185,20 @@ if __name__ == '__main__':
     shutter = np.array(list(map(parse_shutter_speed, input_image_paths)))
     print('Shutter speed:\n', shutter, '\n')
 
-    # HDR for channel G
-    hdr = HDR(shutter, all_g)
-    hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, plot_hist=False, visualize_sample_pt=False)
-    hdr.response_curve(smoothing_lambda, visualize_g=True)
+    # HDR compute response curves
+    plt.clf()
+    plt.title('Response Curves')
+    plt.xlabel('log exposure (E_i * (delta t)_j)')
+    plt.ylabel('pixel value (Z_ij)')
+    for channel, color in [(all_b, 'blue'), (all_g, 'green'), (all_r, 'red')]:
+        print(f'Computing channel {color}...')
+        hdr = HDR(shutter, channel)
+        hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, plot_hist=False, visualize_sample_pt=False)
+        inv_response_curve = hdr.response_curve(smoothing_lambda, visualize_g=False)
+        plt.plot(inv_response_curve, np.arange(0, 256), label=color, c=color)
+    if plot_all_response_curves:
+        plt.legend()
+        plt.show()
+    
 
     
