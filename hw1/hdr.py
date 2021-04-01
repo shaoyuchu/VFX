@@ -186,13 +186,14 @@ class HDR:
 # V sample Eij
 # V construct linear system
 # V solve linear system, get inverse of response curve
-# construct HDR radiance map
+# V construct HDR radiance map
 # save as .hdr
 
 n_sample_pt = 50
 sample_radius = 0.8
 smoothing_lambda = 100
-plot_all_response_curves = False
+plot_all_response_curves = True
+plot_all_radiance_map = True
 
 if __name__ == '__main__':
 
@@ -207,22 +208,37 @@ if __name__ == '__main__':
     shutter = np.array(list(map(parse_shutter_speed, input_image_paths)))
 
     # HDR compute response curves and radiance map
-    plt.clf()
-    plt.title('Response Curves')
-    plt.xlabel('log exposure (E_i * (delta t)_j)')
-    plt.ylabel('pixel value (Z_ij)')
-    for channel, color in [(all_b, 'blue'), (all_g, 'green'), (all_r, 'red')]:
-        print(f'Computing channel {color}...')
+    all_inv_response_curves = []
+    all_ln_irradiance = []
+    color_channels = ['blue', 'green', 'red']
+    for channel, color in [(all_b, color_channels[0]), (all_g, color_channels[1]), (all_r, color_channels[2])]:
+        print(f'\nComputing channel {color}...')
         hdr = HDR(shutter, channel)
         hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, plot_hist=False, visualize_sample_pt=False)
         hdr.compute_inv_response_curve(smoothing_lambda, visualize_g=False)
-        hdr.radiance_map(plot_radiance=True)
-        plt.plot(hdr.inv_response_curve, np.arange(0, 256), label=color, c=color)
-        break
-        
+        hdr.radiance_map(plot_radiance=False)
+        all_inv_response_curves.append(hdr.inv_response_curve)
+        all_ln_irradiance.append(hdr.ln_irradiance)
+    
+    # plot response curves
     if plot_all_response_curves:
+        plt.clf()
+        plt.title('Response Curves')
+        plt.xlabel('log exposure (E_i * (delta t)_j)')
+        plt.ylabel('pixel value (Z_ij)')
+        for i in range(3):
+            plt.plot(all_inv_response_curves[i], np.arange(256), label=color_channels[i], c=color_channels[i])
         plt.legend()
-        plt.show()
+        plt.savefig('response_curves.png')
     
-
-    
+    # plot radiance maps
+    v_min = np.min(all_ln_irradiance)
+    v_max = np.max(all_ln_irradiance)
+    if plot_all_radiance_map:
+        for i in range(3):
+            plt.clf()
+            plt.imshow(all_ln_irradiance[i], cmap='rainbow', vmin=v_min, vmax=v_max)
+            plt.colorbar()
+            plt.axis('off')
+            plt.title(color_channels[i])
+            plt.savefig(f'radiance_map_{color_channels[i]}.png')
