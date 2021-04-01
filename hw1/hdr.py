@@ -4,7 +4,7 @@ import cv2
 from matplotlib import image
 import matplotlib.pyplot as plt
 
-def parse_shutter_speed(filename):
+def parse_exposure_time(filename):
     # eg. './bridge/1_8.JPG' -> 0.125
     segments = filename.replace('.', '_').replace('/', '_').split('_')
     return int(segments[-3]) / int(segments[-2])
@@ -27,17 +27,17 @@ def read_images(image_paths):
 # ---------------------------------------- HDR class ----------------------------------------
 class HDR:
 
-    def __init__(self, shutter_speed, values):
-        # self.ln_shutter_speed[i]: ln(shutter speed) of the i-th image
+    def __init__(self, exposure_time, values):
+        # self.ln_exposure_time[i]: ln(exposure time) of the i-th image
         # self.values[i, j, k]: the intensity of pixel (j, k) in the i-the image
-        self.ln_shutter_speed = np.log(shutter_speed)
+        self.ln_exposure_time = np.log(exposure_time)
         self.values = values
         self.n_image = values.shape[0]
         self.height = values.shape[1]
         self.width = values.shape[2]
         print(f'Create HDR image with {self.values.shape[0]} images of shape ({self.height}, {self.width})')
-        print('ln shutter speed:')
-        print(self.ln_shutter_speed)
+        print('ln exposure time:')
+        print(self.ln_exposure_time)
     
     def __close_to_center(self, rs, cs, radius):
         # compute the distances to the center
@@ -128,7 +128,7 @@ class HDR:
                 w = self.__weight(z)
                 mat_A[cur_r, z] = w
                 mat_A[cur_r, 256 + i] = -1 * w
-                mat_b[cur_r] = w * self.ln_shutter_speed[j]
+                mat_b[cur_r] = w * self.ln_exposure_time[j]
                 cur_r += 1
 
         # curve centering constraint
@@ -164,14 +164,18 @@ class HDR:
 
         # compute weighted average of irradiance
         w = np.vectorize(self.__weight)(self.values)
-        ln_t = np.array(list(map(lambda t: np.full_like(self.values[0], t, dtype=np.float64), self.ln_shutter_speed)))
+        ln_t = np.array(list(map(lambda t: np.full_like(self.values[0], t, dtype=np.float64), self.ln_exposure_time)))
         g_z = np.vectorize(lambda v: self.inv_response_curve[v])(self.values)
-        weighted_sum = np.mean(w * (g_z - ln_t), axis=0)
+        ln_E = g_z - ln_t
+        weighted_sum = np.mean(w * ln_E, axis=0)
         total_weight = np.mean(w, axis=0)
         self.ln_irradiance = np.zeros((self.height, self.width), dtype=np.float64)      
         for r in range(self.height):
             for c in range(self.width):
-                self.ln_irradiance[r, c] = 0 if total_weight[r, c] == 0 else weighted_sum[r, c] / total_weight[r, c]
+                if total_weight[r, c] == 0:
+                    self.ln_irradiance[r, c] = np.mean(ln_E[:, r, c])
+                else:
+                    self.ln_irradiance[r, c] = weighted_sum[r, c] / total_weight[r, c]
         self.irradiance = np.exp(self.ln_irradiance)
 
         # plot radiance map
@@ -185,7 +189,7 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'cosmology_hall'
+image_type = 'SocialScienceLibrary_aligned'
 n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100
@@ -200,8 +204,8 @@ if __name__ == '__main__':
     input_image_paths = list(filter(lambda f: (f.endswith('.JPG') or f.endswith('.png')), input_image_paths))
     all_b, all_g, all_r = read_images(input_image_paths)
     
-    # parse shutter speed
-    shutter = np.array(list(map(parse_shutter_speed, input_image_paths)))
+    # parse exposure time
+    exposure = np.array(list(map(parse_exposure_time, input_image_paths)))
 
     # HDR compute response curves and radiance map
     all_inv_response_curves = []
@@ -210,7 +214,7 @@ if __name__ == '__main__':
     color_channels = ['blue', 'green', 'red']
     for channel, color in [(all_b, color_channels[0]), (all_g, color_channels[1]), (all_r, color_channels[2])]:
         print(f'Computing channel {color}...')
-        hdr = HDR(shutter, channel)
+        hdr = HDR(exposure, channel)
         hdr.sample_pixels(n_sample_pt, sample_radius=sample_radius, show_hist=False, show_sample_pt=False)
         hdr.compute_inv_response_curve(smoothing_lambda, visualize_g=False)
         hdr.radiance_map(show_radiance=False)
