@@ -61,8 +61,8 @@ def toneMapping(HDRImage):
 	r = np.divide(R, intensity)
 
 	log_intensity_layer = np.log10(intensity)
-	# log_base = cv2.bilateralFilter(log_intensity_layer, 10, 10, 10)
-	log_base = bilateralFilter(log_intensity_layer, 10)
+	log_base = cv2.bilateralFilter(log_intensity_layer, 10, 15, 15)
+	# log_base = bilateralFilter(log_intensity_layer, 10)
 	log_detail = log_intensity_layer - log_base
 
 	targetContrast = np.log10(5)
@@ -81,25 +81,30 @@ def toneMapping(HDRImage):
 	# Merge RGB channels to single image
 	tone_mapping_result = cv2.merge([B_output,G_output,R_output])
 	# intensity adjustment
-	templateImage = cv2.imread('./input_images/indoor/DSC01830.JPG')
+	templateImage = cv2.imread('./input_images/indoor_aligned/1_25.JPG')
 	tone_mapping_result = intensityAdjustment(tone_mapping_result, templateImage)
 	return tone_mapping_result
 
 
 if __name__ == '__main__':
-	inputFile = './output_images/My_Images_aligned'
+	# inputFile = './output_images/My_Images_aligned'
+	inputFile = './output_images/indoor_aligned'
 	HDRImage = cv2.imread(inputFile + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
-	# tone_mapping_result = toneMapping(HDRImage)
-	# cv2.imwrite("tone_mapping_result.jpg", tone_mapping_result)
-
-	# OpenCV tone mapping
-	tonemapMantiuk = cv2.createTonemapMantiuk(0.83, 0.83, 0.83)
-	ldrMantiuk = tonemapMantiuk.process(HDRImage)
-	ldrMantiuk = 3 * ldrMantiuk
-	cv2.imwrite("ldr-Mantiuk.jpg", ldrMantiuk * 255)
+	tone_mapping_result = toneMapping(HDRImage)
+	cv2.imwrite("./tone_mapping_images/tone_mapping_result.jpg", tone_mapping_result)
 
 
-	# tonemapDrago = cv2.createTonemapDrago(0.6, 0.5, 0.7)
+	### OpenCV tone mapping
+	# tonemapReinhard = cv2.createTonemapReinhard(1, 0.6, 0.6, 0.7)
+	# ldrReinhard = tonemapReinhard.process(HDRImage)
+	# cv2.imwrite("./tone_mapping_images/ldr-Reinhard.jpg", ldrReinhard * 255)
+
+	# tonemapMantiuk = cv2.createTonemapMantiuk(0.83, 0.83, 0.83)
+	# ldrMantiuk = tonemapMantiuk.process(HDRImage)
+	# ldrMantiuk = 3 * ldrMantiuk
+	# cv2.imwrite("./tone_mapping_images/ldr-Mantiuk.jpg", ldrMantiuk * 255)
+
+	# tonemapDrago = cv2.createTonemapDrago(0.52, 0.52, 0.68)
 	# ldrDrago = tonemapDrago.process(HDRImage)
 	# ldrDrago = 3 * ldrDrago
-	# cv2.imwrite("ldr-Drago.jpg", ldrDrago * 255)
+	# cv2.imwrite("./tone_mapping_images/ldr-Drago.jpg", ldrDrago * 255)
