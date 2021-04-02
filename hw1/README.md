@@ -1,4 +1,5 @@
 # Project #1: High Dynamic Range Imaging
+
 - 資管四 B06705028 朱紹瑜
 - 資工所碩一 R09922063 鄭筠庭
 
@@ -29,6 +30,7 @@ Input images need to be placed inside folder `./input_images/My_Images`. HDR out
 Note that `numpy`,  `cv2`, and `PIL` are required.
 
 ### Image Alignment:  Median Threshold Bitmap (MTB)
+
 Image alignment methods: Ward's MTB algorithm  
 Reference paper：http://www.anyhere.com/gward/papers/jgtpap2.pdf  
 
@@ -50,6 +52,7 @@ Find the shift direction that creates the least amount of error, store the shift
 
 
 ### HDR
+
 Reference paper: [Recovering high dynamic range radiance maps from photographs](https://dl.acm.org/doi/10.1145/258734.258884)
 
 **Step 1: Sample pixels**  
@@ -84,6 +87,7 @@ The following figures show the computed radiance map of R, G, B channel.
 
 
 ### Tone mapping: Fast Bilateral Filtering
+
 **Step 1: Get intensity layer**  
 Split the RGB channels. Calculate the intensity using the equation `intensity = 1/61 * (20 * R + 40 * G + B)`, and get the log10 intensity layer value.  
 
@@ -93,6 +97,7 @@ We need to calculate the *denoised intensity* using pixels within *radius*. Gaus
 
 **Step 3: Compress and Normalize**  
 Follow the algorithm to get the detail image, scale, intensity image. Calculate the R, G, B value by multipling 10^log(output intensity). 
+
 ```
 log(detail) = log(input intensity)-log(base)
 compressionfactor = log5/(max(log_base) - min(log_base))
@@ -100,12 +105,14 @@ log(absolute scale) = max(log_base) * compressionfactor
 log(output intensity) = log(base)*compressionfactor + log(detail) - log(absolute scale)
 output = RGBchannel * 10^(log(output intensity))
 ```
+
 Finally, normalize the 3 channels and merge them together. Adjustment intensity with one original image as template.  
 
 ### Result
+
 The *Bilateral Filtering* figure is our HDR image result. We also expolre other tone mapping algorithms available in OpenCV.  
-|              **Bilateral Filtering**            |               **Reinhard Tonemap**             |
-| :---------------------------------------------: | :--------------------------------------------: |
-| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) |
-|                 **Drago Tonemap**               |               **Mantiuk Tonemap**              |
-| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg) |
+
+|                     Bilateral Filtering                      |                       Reinhard Tonemap                       |                        Drago Tonemap                         |                       Mantiuk Tonemap                        |
+| :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+| <img src="https://i.imgur.com/rf4nGG8.jpg" style="zoom:33%;" /> | <img src="https://i.imgur.com/zhCgVdK.jpg" style="zoom:33%;" /> | <img src="https://i.imgur.com/3F66kRQ.jpg" style="zoom:33%;" /> | <img src="https://i.imgur.com/RjVzqkn.jpg" style="zoom:33%;" /> |
+
