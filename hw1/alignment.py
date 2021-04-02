@@ -20,10 +20,9 @@ def readImages(folder):
 			tempImage = Image.open(file)
 			exifdata = tempImage.getexif()
 			#  0x829A: "ExposureTime"
-			data = exifdata.get(0x829A)
-			if isinstance(data, bytes):
-				data = data.decode()
-			dataValue = data[0] / data[1]
+			dataValue = exifdata.get(0x829A)
+			if isinstance(dataValue, bytes):
+				dataValue = dataValue.decode()
 			dataValue = Fraction(dataValue).limit_denominator()
 
 			if dataValue>=1:
@@ -130,7 +129,7 @@ def MedianThreshold(sourceImages, imageList, imageNames, outputFileDirectory):
 		cv2.imwrite(outputFileDirectory + '/' + imgName, tempImage)
 		print('Image ' + imgName + ' complete')
 	return alignedImageList
-
+# -------------- End of Median Threshold Bitmap ------------------
 
 if __name__ == '__main__':
 	inputDirectory = './input_images/social_science'

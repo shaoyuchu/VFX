@@ -60,5 +60,25 @@ The following figures show the computed radiance map of R, G, B channel.
 (Figure: Radiance map * 3)
 
 
-## Tone mapping
+## Tone mapping: Fast Bilateral Filtering
+**Step 1: Get intensity layer**  
+Split the RGB channels. Calculate the intensity using the equation `intensity = 1/61 * (20 * R + 40 * G + B)`, and get the log10 intensity layer value.  
 
+**Step 2: Bilateral filter**  
+Go through every pixels using two *for loop*, and call the `pixelBilateralFilter()` to calculate the smoothed value for each pixel.  
+We need to calculate the *denoised intensity* using pixels within *radius*. Gaussian function `ws` considers spatial domain and `wr` considers range domain to be its standard deviation value. Add up `ws * wr` to be the denoised intensity denominator, while denoised intensity fraction is the sum of `w*input_image[k,l]`. Divide these two number to get the bilateral filtered image (log_base).
+
+**Step 3: Compress and Normalize**
+Follow the algorithm to get the detail image, scale, intensity image. Calculate the R, G, B value by multipling 10^log(output intensity). 
+```
+log(detail) = log(input intensity)-log(base)
+compressionfactor = log5/(max(log_base) - min(log_base))
+log(absolute scale) = max(log_base) * compressionfactor
+log(output intensity) = log(base)*compressionfactor + log(detail) - log(absolute scale)
+output = RGBchannel * 10^(log(output intensity))
+```
+Finally, normalize the 3 channels and merge them together. Adjustment intensity with one original image as template.  
+
+The following figure is our HDR image result.
+
+(Figure: Tone mapping result)
