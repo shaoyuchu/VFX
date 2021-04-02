@@ -101,23 +101,10 @@ output = RGBchannel * 10^(log(output intensity))
 ```
 Finally, normalize the 3 channels and merge them together. Adjustment intensity with one original image as template.  
 
-The following figure is our HDR image result.
-
-**Bilateral Filtering**  
-<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg" width="40%">
-
-
-We also expolre other tone mapping algorithms available in OpenCV:  
-|               **Reinhard Tonemap**              |               **Mantiuk Tonemap**              |
+The *Bilateral Filtering* figure is our HDR image result. We also expolre other tone mapping algorithms available in OpenCV:  
+|              **Bilateral Filtering**            |               **Reinhard Tonemap**             |
 | :---------------------------------------------: | :--------------------------------------------: |
-| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg) |
-
-
-**Reinhard Tonemap**  
-<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg" width="40%">  
-
-**Mantiuk Tonemap**  
-<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg" width="40%">
-
-**Drago Tonemap**  
-<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg" width="40%">
+| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) |
+|                 **Drago Tonemap**               |               **Mantiuk Tonemap**              |
+| :---------------------------------------------: | :--------------------------------------------: |
+| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg) |
