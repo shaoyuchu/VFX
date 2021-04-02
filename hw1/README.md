@@ -68,7 +68,7 @@ Split the RGB channels. Calculate the intensity using the equation `intensity = 
 Go through every pixels using two *for loop*, and call the `pixelBilateralFilter()` to calculate the smoothed value for each pixel.  
 We need to calculate the *denoised intensity* using pixels within *radius*. Gaussian function `ws` considers spatial domain and `wr` considers range domain to be its standard deviation value. Add up `ws * wr` to be the denoised intensity denominator, while denoised intensity fraction is the sum of `w*input_image[k,l]`. Divide these two number to get the bilateral filtered image (log_base).
 
-**Step 3: Compress and Normalize**
+**Step 3: Compress and Normalize**  
 Follow the algorithm to get the detail image, scale, intensity image. Calculate the R, G, B value by multipling 10^log(output intensity). 
 ```
 log(detail) = log(input intensity)-log(base)

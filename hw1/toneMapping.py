@@ -89,10 +89,17 @@ def toneMapping(HDRImage):
 if __name__ == '__main__':
 	inputFile = './output_images/indoor'
 	HDRImage = cv2.imread(inputFile + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
-	tone_mapping_result = toneMapping(HDRImage)
-	cv2.imwrite("tone_mapping_result.jpg", tone_mapping_result)
+	# tone_mapping_result = toneMapping(HDRImage)
+	# cv2.imwrite("tone_mapping_result.jpg", tone_mapping_result)
 
 	# OpenCV tone mapping
-	# tonemapReinhard = cv2.createTonemapReinhard(1.5, 0,0,0)
-	# ldrReinhard = tonemapReinhard.process(HDRImage)
-	# cv2.imwrite("ldrReinhard.jpg", ldrReinhard * 255)
+	tonemapMantiuk = cv2.createTonemapMantiuk(0.83, 0.83, 0.83)
+	ldrMantiuk = tonemapMantiuk.process(HDRImage)
+	ldrMantiuk = 3 * ldrMantiuk
+	cv2.imwrite("ldr-Mantiuk.jpg", ldrMantiuk * 255)
+
+
+	# tonemapDrago = cv2.createTonemapDrago(0.6, 0.5, 0.7)
+	# ldrDrago = tonemapDrago.process(HDRImage)
+	# ldrDrago = 3 * ldrDrago
+	# cv2.imwrite("ldr-Drago.jpg", ldrDrago * 255)
