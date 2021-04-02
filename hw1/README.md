@@ -108,6 +108,11 @@ The following figure is our HDR image result.
 
 
 We also expolre other tone mapping algorithms available in OpenCV:  
+|               **Reinhard Tonemap**              |               **Mantiuk Tonemap**              |
+| :---------------------------------------------: | :--------------------------------------------: |
+| ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg) |
+
+
 **Reinhard Tonemap**  
 <img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg" width="40%">  
 
