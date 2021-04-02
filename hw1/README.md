@@ -106,5 +106,4 @@ The *Bilateral Filtering* figure is our HDR image result. We also expolre other 
 | :---------------------------------------------: | :--------------------------------------------: |
 | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) |
 |                 **Drago Tonemap**               |               **Mantiuk Tonemap**              |
-| :---------------------------------------------: | :--------------------------------------------: |
 | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg) |
