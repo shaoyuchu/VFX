@@ -25,6 +25,7 @@ python3 toneMapping.py
 ```
 
 Input images need to be placed inside folder `./input_images/My_Images`. HDR output image will be placed inside folder `./output_images/My_Images_aligned`. The result image after tone mapping will be placed inside `./tone_mapping_images`.  
+
 Note that `numpy`,  `cv2`, and `PIL` are required.
 
 ### Image Alignment:  Median Threshold Bitmap (MTB)
@@ -101,7 +102,8 @@ output = RGBchannel * 10^(log(output intensity))
 ```
 Finally, normalize the 3 channels and merge them together. Adjustment intensity with one original image as template.  
 
-The *Bilateral Filtering* figure is our HDR image result. We also expolre other tone mapping algorithms available in OpenCV:  
+### Result
+The *Bilateral Filtering* figure is our HDR image result. We also expolre other tone mapping algorithms available in OpenCV.  
 |              **Bilateral Filtering**            |               **Reinhard Tonemap**             |
 | :---------------------------------------------: | :--------------------------------------------: |
 | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg) | ![](https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg) |
