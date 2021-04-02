@@ -205,13 +205,13 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'indoor'
+image_type = 'indoor_aligned'
 n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100
 plot_all_response_curves = True
 plot_all_radiance_map = True
-exposure_from_metadata = True
+exposure_from_metadata = False
 
 if __name__ == '__main__':
 

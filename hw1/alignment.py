@@ -24,6 +24,7 @@ def readImages(folder):
 			if isinstance(dataValue, bytes):
 				dataValue = dataValue.decode()
 			dataValue = Fraction(dataValue).limit_denominator()
+			print(dataValue)
 
 			if dataValue>=1:
 				dataValueString = str(dataValue)+'_1.JPG'
@@ -132,7 +133,7 @@ def MedianThreshold(sourceImages, imageList, imageNames, outputFileDirectory):
 # -------------- End of Median Threshold Bitmap ------------------
 
 if __name__ == '__main__':
-	inputDirectory = './input_images/social_science'
+	inputDirectory = './input_images/indoor'
 	sourceImages, grayImages, imageNames = readImages(inputDirectory + '/')
 
 	# Check if output directory exist. If not exist, create one

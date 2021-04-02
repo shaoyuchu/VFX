@@ -53,7 +53,7 @@ $$
 E_i &= \exp(\frac{\sum_{j=1}^P w(Z_{ij})[g(Z_{ij}) - \ln \Delta t_j]}{\sum_{j=1}^P w(Z_{ij})}).
 \end{align*}
 $$
-Note that if the sum of weight equals to 0, we simply compute the average instead of the weighted 
+Note that if the sum of weight equals to 0, we compute the average with equal weight. 
 
 The following figures show the computed radiance map of R, G, B channel.
 
