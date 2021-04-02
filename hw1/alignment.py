@@ -133,11 +133,11 @@ def MedianThreshold(sourceImages, imageList, imageNames, outputFileDirectory):
 # -------------- End of Median Threshold Bitmap ------------------
 
 if __name__ == '__main__':
-	inputDirectory = './input_images/indoor'
+	inputDirectory = './input_images/My_Images'
 	sourceImages, grayImages, imageNames = readImages(inputDirectory + '/')
 
 	# Check if output directory exist. If not exist, create one
-	outputFileDirectory = './' + inputDirectory + '_aligned'
+	outputFileDirectory = './' + inputDirectory + '_Aligned'
 	if os.path.isdir(outputFileDirectory) != True:
 		os.mkdir(outputFileDirectory)
 

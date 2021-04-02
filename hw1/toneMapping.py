@@ -87,7 +87,7 @@ def toneMapping(HDRImage):
 
 
 if __name__ == '__main__':
-	inputFile = './output_images/indoor'
+	inputFile = './output_images/My_Images_aligned'
 	HDRImage = cv2.imread(inputFile + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
 	# tone_mapping_result = toneMapping(HDRImage)
 	# cv2.imwrite("tone_mapping_result.jpg", tone_mapping_result)

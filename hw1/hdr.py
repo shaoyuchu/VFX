@@ -205,7 +205,7 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'indoor_aligned'
+image_type = 'My_Images_aligned'
 n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100

@@ -1,9 +1,32 @@
 # Project #1: High Dynamic Range Imaging
-### Group member
 - 資管四 B06705028 朱紹瑜
 - 資工所碩一 R09922063 鄭筠庭
 
-## Image Alignment:  Median Threshold Bitmap (MTB)
+### Introduction
+
+In this project, we implemented **HDR image** with **image adjustment** and **tone mapping**. For demo, we ran our code on the following image set:
+
+|               **1/10**               |               **1/13**               |               **1/15**               |               **1/20**               |
+| :----------------------------------: | :----------------------------------: | :----------------------------------: | :----------------------------------: |
+| ![](https://i.imgur.com/4gDOjFK.jpg) | ![](https://i.imgur.com/TdtBvjT.jpg) | ![](https://i.imgur.com/FBWsjoW.jpg) | ![](https://i.imgur.com/ROSAeuz.jpg) |
+|               **1/25**               |               **1/30**               |               **1/40**               |               **1/50**               |
+| ![](https://i.imgur.com/RMoWn5U.jpg) | ![](https://i.imgur.com/NsqTb4K.jpg) | ![](https://i.imgur.com/f1xXoz1.jpg) | ![](https://i.imgur.com/YTKJc9O.jpg) |
+|               **1/60**               |               **1/80**               |              **1/100**               |              **1/125**               |
+| ![](https://i.imgur.com/rpSlXnQ.jpg) | ![](https://i.imgur.com/BvRIIQn.jpg) | ![](https://i.imgur.com/bsIXIXW.jpg) | ![](https://i.imgur.com/OdsgWZg.jpg) |
+
+**Usage**
+
+Run the following command to reproduce the result.
+
+```sh
+python3 alignment.py
+python3 hdr.py
+python3 toneMapping.py
+```
+
+Note that `numpy`,  `cv2`, and `PIL` are required.
+
+### Image Alignment:  Median Threshold Bitmap (MTB)
 Image alignment methods: Ward's MTB algorithm  
 Reference paper：http://www.anyhere.com/gward/papers/jgtpap2.pdf  
 
@@ -24,13 +47,11 @@ The fundamental idea is to calculate`(BaselineImage) XOR (TargetImage) AND (excl
 Find the shift direction that creates the least amount of error, store the shifting value and pass it down the image pyramid. Repeat Step 3 until we get the shifting value for original sized image. Use `cv2.warpAffine` to align the soure images and save them to the output folder.
 
 
-## HDR
+### HDR
 Reference paper: [Recovering high dynamic range radiance maps from photographs](https://dl.acm.org/doi/10.1145/258734.258884)
 
 **Step 1: Sample pixels**  
-The original image set contains 13 images with shutter speed ranging from 1/128 to 32. To sample pixels with various irradiance, we target at the image with the largest value variance. Within the targeted image, we select pixels with values locating at the 0, 2, ..., 100 percentile. Moreover, to be invulnerable of the appended margin after alignment, pixels on the edges are avoid. A total of 51 pixel positions are sampled.
-
-(Figrue: Sampled pixel positions)
+The original image set contains 12 images with shutter speed ranging from 1/125 to 1/10. To sample pixels with various irradiance, we target at the image with the largest value variance. Within the targeted image, we select pixels with values locating at the 0, 2, ..., 100 percentile. Moreover, to be invulnerable of the appended margin after alignment, pixels on the edges are avoid. A total of 51 pixel positions are sampled.
 
 **Step 2: Compute Log Inverse of the Response Curve**  
 To recover the response curve, we minimize the following function:
@@ -41,9 +62,9 @@ where $Z_{ij}$ is the intensity of the $i$-th sampled pixel in the $j$-th image,
 $$
 w(z) = \min\{z, 255-z\}.
 $$
-We solve the optimization problem above with the least square method by constructing a linear system as mentioned in the lecture.
+We solve the optimization problem above with the least square method by constructing a linear system as mentioned in the lecture. The resulting response curve is shown below.
 
-(Figure: Response curve)
+<img src="https://i.imgur.com/UH3FbpY.png" style="zoom:50%;" />
 
 **Step 3: Reconstruct the radiance map**  
 With the computed response curve, we can reconstruct the radiance map based on the following equation:
@@ -57,10 +78,10 @@ Note that if the sum of weight equals to 0, we compute the average with equal we
 
 The following figures show the computed radiance map of R, G, B channel.
 
-(Figure: Radiance map * 3)
+![](https://i.imgur.com/vHrxKQR.png)
 
 
-## Tone mapping: Fast Bilateral Filtering
+### Tone mapping: Fast Bilateral Filtering
 **Step 1: Get intensity layer**  
 Split the RGB channels. Calculate the intensity using the equation `intensity = 1/61 * (20 * R + 40 * G + B)`, and get the log10 intensity layer value.  
 
