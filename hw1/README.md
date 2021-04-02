@@ -104,9 +104,15 @@ Finally, normalize the 3 channels and merge them together. Adjustment intensity 
 The following figure is our HDR image result.
 
 **Bilateral Filtering**  
-
+<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/tone_mapping_result.jpg" width="40%">
 
 
 We also expolre other tone mapping algorithms available in OpenCV:  
-|          **Reinhard Tonemap**          |          **Mantiuk Tonemap**          |           **Drago Tonemap**           |
-|<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg" width="40%">|<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg" width="40%">|<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg" width="40%">|
+**Reinhard Tonemap**  
+<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Reinhard.jpg" width="40%">  
+
+**Mantiuk Tonemap**  
+<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Mantiuk.jpg" width="40%">
+
+**Drago Tonemap**  
+<img src="https://github.com/shaoyu0966/VFX/blob/main/hw1/tone_mapping_images/ldr-Drago.jpg" width="40%">
