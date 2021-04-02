@@ -61,13 +61,13 @@ def toneMapping(HDRImage):
 	r = np.divide(R, intensity)
 
 	log_intensity_layer = np.log10(intensity)
-	log_base = cv2.bilateralFilter(log_intensity_layer, 10, 15, 15)
+	log_base = cv2.bilateralFilter(log_intensity_layer, 10, 20, 20)
 	# log_base = bilateralFilter(log_intensity_layer, 10)
 	log_detail = log_intensity_layer - log_base
 
 	targetContrast = np.log10(5)
-	compressionfactor = targetContrast/(np.max(log_base) - np.min(log_base))
-	log_absolute_scale= np.max(log_base) * compressionfactor
+	compressionfactor = targetContrast/(np.nanmax(log_base) - np.nanmin(log_base))
+	log_absolute_scale= np.nanmax(log_base) * compressionfactor
 	log_output_intensity = log_base * compressionfactor + log_detail - log_absolute_scale
 	B_output = b * np.power(10, (log_output_intensity))
 	G_output = g * np.power(10, (log_output_intensity))
@@ -81,15 +81,15 @@ def toneMapping(HDRImage):
 	# Merge RGB channels to single image
 	tone_mapping_result = cv2.merge([B_output,G_output,R_output])
 	# intensity adjustment
-	templateImage = cv2.imread('./input_images/indoor_aligned/1_25.JPG')
+	templateImage = cv2.imread('./input_images/' + inputFolder_inner + '/1_20.JPG')
 	tone_mapping_result = intensityAdjustment(tone_mapping_result, templateImage)
 	return tone_mapping_result
 
 
+inputFolder = './output_images/'
+inputFolder_inner = 'My_Images_aligned'
 if __name__ == '__main__':
-	# inputFile = './output_images/My_Images_aligned'
-	inputFile = './output_images/indoor_aligned'
-	HDRImage = cv2.imread(inputFile + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
+	HDRImage = cv2.imread(inputFolder + inputFolder_inner + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
 	tone_mapping_result = toneMapping(HDRImage)
 	cv2.imwrite("./tone_mapping_images/tone_mapping_result.jpg", tone_mapping_result)
 
