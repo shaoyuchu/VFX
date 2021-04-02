@@ -130,7 +130,7 @@ def MedianThreshold(sourceImages, imageList, imageNames, outputFileDirectory):
 		cv2.imwrite(outputFileDirectory + '/' + imgName, tempImage)
 		print('Image ' + imgName + ' complete')
 	return alignedImageList
-
+# -------------- End of Median Threshold Bitmap ------------------
 
 if __name__ == '__main__':
 	inputDirectory = './input_images/indoor'

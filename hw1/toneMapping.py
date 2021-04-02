@@ -7,16 +7,51 @@ def showImage(img):
 	cv2.destroyAllWindows()
 	return
 
-
-def intensityAdjustment(image, template):
-	g, b, r = cv2.split(image)
+def intensityAdjustment(input_image, template):
+	g, b, r = cv2.split(input_image)
 	tg, tb, tr = cv2.split(template)
 	b *= np.average(tb) / np.nanmean(b)
 	g *= np.average(tg) / np.nanmean(g)
 	r *= np.average(tr) / np.nanmean(r)
-	image = cv2.merge((g,b,r))
-	return image
+	input_image = cv2.merge((g,b,r))
+	return input_image
 
+# -------------- Bilateral Filter ------------------
+def gaussianFunction(x, standard_deviation):
+	pi = np.pi
+	sd = standard_deviation
+	return (1 / (sd * (2 * pi) ** (1 / 2))) * np.exp(-(x ** 2 / (2 * sd ** 2)))
+
+
+def bilateralFilter(input_image, radius):
+	height, width = input_image.shape[:2]
+	output_image = np.zeros(input_image.shape)
+	for h in range(height):
+		print("bilateralFilter: "+str(h))
+		for w in range(width):
+			output_image[h,w] = pixelBilateralFilter(input_image, h, w, radius)
+	return output_image
+
+def pixelBilateralFilter(input_image, height, width, r):
+	spatial_domain = 100
+	range_domain = 100
+	denoised_intensity_fraction, denoised_intensity_denominator = 0, 0
+	# Search the pixels within the radius -- r
+	for k in range(height-r, height+r+1):
+		for l in range(width-r, width+r+1):
+			# Check if the pixel is located outside the border
+			if k >= height or k < 0 or l >= width or l < 0:
+				continue
+			ws = gaussianFunction((height-k)**2 - (width-l)**2, spatial_domain)
+			wr = gaussianFunction((input_image[height, width] - input_image[k,l]), range_domain)
+			w = ws * wr
+			denoised_intensity_fraction += w*input_image[k,l]
+			denoised_intensity_denominator += w
+
+	denoised_intensity = np.divide(denoised_intensity_fraction, denoised_intensity_denominator)
+	return denoised_intensity
+
+# -------------- End of Bilateral Filter ------------------
 
 def toneMapping(HDRImage):
 	B, G, R = cv2.split(HDRImage)
@@ -26,7 +61,8 @@ def toneMapping(HDRImage):
 	r = np.divide(R, intensity)
 
 	log_intensity_layer = np.log10(intensity)
-	log_base = cv2.bilateralFilter(log_intensity_layer, 9, 5, 5)
+	# log_base = cv2.bilateralFilter(log_intensity_layer, 10, 10, 10)
+	log_base = bilateralFilter(log_intensity_layer, 10)
 	log_detail = log_intensity_layer - log_base
 
 	targetContrast = np.log10(5)
@@ -44,12 +80,15 @@ def toneMapping(HDRImage):
 	R_output = cv2.normalize(R_output, np.array([]), alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 	# Merge RGB channels to single image
 	tone_mapping_result = cv2.merge([B_output,G_output,R_output])
+	# intensity adjustment
+	templateImage = cv2.imread('./input_images/indoor/DSC01830.JPG')
+	tone_mapping_result = intensityAdjustment(tone_mapping_result, templateImage)
 	return tone_mapping_result
 
 
 if __name__ == '__main__':
-	inputFile = './output_images/Memorial_SourceImages'
-	HDRImage = cv2.imread(inputFile + '/official_hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
+	inputFile = './output_images/indoor'
+	HDRImage = cv2.imread(inputFile + '/hdr_result.hdr', flags = cv2.IMREAD_ANYDEPTH)
 	tone_mapping_result = toneMapping(HDRImage)
 	cv2.imwrite("tone_mapping_result.jpg", tone_mapping_result)
 
