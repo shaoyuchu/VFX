@@ -3,11 +3,27 @@ import numpy as np
 import cv2
 from matplotlib import image
 import matplotlib.pyplot as plt
+from PIL import Image
+from PIL.ExifTags import TAGS
 
-def parse_exposure_time(filename):
+def parse_exposure_time(image_paths):
     # eg. './bridge/1_8.JPG' -> 0.125
-    segments = filename.replace('.', '_').replace('/', '_').split('_')
-    return int(segments[-3]) / int(segments[-2])
+    all_exposure_time = []
+    for path in image_paths:
+        segments = path.replace('.', '_').replace('/', '_').split('_')
+        all_exposure_time.append(int(segments[-3]) / int(segments[-2]))
+    all_exposure_time = np.array(all_exposure_time)
+    return all_exposure_time
+
+def get_exposure_time_from_metadata(image_paths):
+    exposure_id = [tag_id for tag_id, tag_name in TAGS.items() if tag_name == 'ExposureTime'][0]
+    all_exposure_time = []
+    for path in image_paths:
+        image = Image.open(path)
+        exifdata = image.getexif()
+        all_exposure_time.append(float(exifdata[exposure_id]))
+    all_exposure_time = np.array(all_exposure_time)
+    return all_exposure_time
 
 def read_images(image_paths):
     all_B, all_G, all_R = [], [], []
@@ -189,12 +205,13 @@ class HDR:
 
 input_image_dir = './input_images/'
 output_image_path = './output_images/'
-image_type = 'main_library'
+image_type = 'indoor'
 n_sample_pt = 51
 sample_radius = 0.8
 smoothing_lambda = 100
 plot_all_response_curves = True
 plot_all_radiance_map = True
+exposure_from_metadata = True
 
 if __name__ == '__main__':
 
@@ -205,7 +222,11 @@ if __name__ == '__main__':
     all_b, all_g, all_r = read_images(input_image_paths)
     
     # parse exposure time
-    exposure = np.array(list(map(parse_exposure_time, input_image_paths)))
+    if exposure_from_metadata:
+        exposure = get_exposure_time_from_metadata(input_image_paths)
+    else:
+        exposure = parse_exposure_time(input_image_paths)
+    print(exposure)
 
     # HDR compute response curves and radiance map
     all_inv_response_curves = []
