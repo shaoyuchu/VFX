@@ -28,9 +28,7 @@ Find the shift direction that creates the least amount of error, store the shift
 Reference paper: [Recovering high dynamic range radiance maps from photographs](https://dl.acm.org/doi/10.1145/258734.258884)
 
 **Step 1: Sample pixels**  
-The original image set contains 13 images with shutter speed ranging from 1/128 to 32. To sample pixels with various irradiance, we target at the image with the largest value variance. Within the targeted image, we select pixels with values locating at the 0, 2, ..., 100 percentile. Moreover, to be invulnerable of the appended margin after alignment, pixels on the edges are avoid. A total of 51 pixel positions are sampled.
-
-(Figrue: Sampled pixel positions)
+The original image set contains 13 images with shutter speed ranging from 1/125 to 1/10. To sample pixels with various irradiance, we target at the image with the largest value variance. Within the targeted image, we select pixels with values locating at the 0, 2, ..., 100 percentile. Moreover, to be invulnerable of the appended margin after alignment, pixels on the edges are avoid. A total of 51 pixel positions are sampled.
 
 **Step 2: Compute Log Inverse of the Response Curve**  
 To recover the response curve, we minimize the following function:
@@ -41,9 +39,9 @@ where $Z_{ij}$ is the intensity of the $i$-th sampled pixel in the $j$-th image,
 $$
 w(z) = \min\{z, 255-z\}.
 $$
-We solve the optimization problem above with the least square method by constructing a linear system as mentioned in the lecture.
+We solve the optimization problem above with the least square method by constructing a linear system as mentioned in the lecture. The resulting response curve is shown below.
 
-(Figure: Response curve)
+<img src="https://i.imgur.com/UH3FbpY.png" style="zoom:50%;" />
 
 **Step 3: Reconstruct the radiance map**  
 With the computed response curve, we can reconstruct the radiance map based on the following equation:
@@ -57,7 +55,7 @@ Note that if the sum of weight equals to 0, we compute the average with equal we
 
 The following figures show the computed radiance map of R, G, B channel.
 
-(Figure: Radiance map * 3)
+![](https://i.imgur.com/vHrxKQR.png)
 
 
 ## Tone mapping
