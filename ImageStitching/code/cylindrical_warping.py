@@ -43,8 +43,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     input_dir = args.input     # eg. ../data/input/parrington
     output_dir = args.output   # eg. ../data/output/parrington
-    # focal_length = args.focal if args.focal is not None else 704.916
-    focal_length = args.focal if args.focal is not None else 600
+    focal_length = args.focal if args.focal is not None else 704.916
 
     # read images, warp
     image_paths = image_paths_under_dir(input_dir)
