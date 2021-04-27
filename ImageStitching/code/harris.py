@@ -9,13 +9,13 @@ class HarrisCornerDetector:
         # convert to grayscale
         if image.ndim == 3:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        self.image = image.astype(np.float64)
+        self.unblurred = image.astype(np.float64)
         self.output_path = output_path
     
     def denoise(self, window_size, sigma):
-        self.image = cv2.GaussianBlur(self.image, (window_size, window_size), sigmaX=sigma)
+        self.image = cv2.GaussianBlur(self.unblurred, (window_size, window_size), sigmaX=sigma)
     
-    def compute_derivatives(self):
+    def derivatives(self):
         self.Ix = cv2.Sobel(self.image, cv2.CV_64F, dx=1, dy=0, ksize=3)
         self.Iy = cv2.Sobel(self.image, cv2.CV_64F, dx=0, dy=1, ksize=3)
         self.Ix = cv2.convertScaleAbs(self.Ix).astype(np.float64)
@@ -36,6 +36,18 @@ class HarrisCornerDetector:
         self.Sxx = cv2.convertScaleAbs(self.Sxx).astype(np.float64)
         self.Sxy = cv2.convertScaleAbs(self.Sxy).astype(np.float64)
         self.Syy = cv2.convertScaleAbs(self.Syy).astype(np.float64)
+    
+    def corner_response(self, k, feature_map_path=None):
+        # k should be between 0.04 and 0.06
+        det = self.Sxx * self.Syy - self.Sxy**2
+        trace = self.Sxx + self.Syy
+        response = det - k * trace**2
+        thresh = np.percentile(response, 99)
+        corner = (response > thresh)
+
+        # show the image with feature points marked
+        if feature_map_path is not None:
+            mark_on_img(self.unblurred, corner, path=feature_map_path)
 
 if __name__ == '__main__':
 
@@ -56,7 +68,8 @@ if __name__ == '__main__':
         # harris corner detection
         harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
         harris.denoise(window_size=5, sigma=1)
-        harris.compute_derivatives()
+        harris.derivatives()
         harris.gaussian_conv(window_size=5, sigma=1)
+        harris.corner_response(k=0.05, feature_map_path=f'{output_dir}/feature_{file_name}')
 
         break

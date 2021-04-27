@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+import matplotlib.pyplot as plt
 
 def image_paths_under_dir(input_dir):
     image_paths = os.listdir(input_dir)
@@ -26,3 +27,19 @@ def show_img(window_name, image):
     cv2.imshow(window_name, uint_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+def mark_on_img(image, map, path=None):
+    # mark
+    plt.clf()
+    for r in range(image.shape[0]):
+        for c in range(image.shape[1]):
+            if map[r, c]:
+                plt.scatter(c, r, color='r', s=0.5)
+    plt.imshow(image, cmap='gray')
+
+    # save or show
+    if path is not None:
+        plt.savefig(path, dpi=300)
+        print(f'{path} saved')
+    else:
+        plt.show()
