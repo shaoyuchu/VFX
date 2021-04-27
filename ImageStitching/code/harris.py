@@ -5,12 +5,21 @@ from util import *
 
 class HarrisCornerDetector:
 
-    def __init__(self, image):
+    def __init__(self, image, output_path=None):
         # convert to grayscale
         if image.ndim == 3:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        self.image = image
-
+        self.image = image.astype(np.float64)
+        self.output_path = output_path
+    
+    def denoise(self, window_size, sigma):
+        self.image = cv2.GaussianBlur(self.image, (window_size, window_size), sigmaX=sigma)
+    
+    def compute_derivatives(self):
+        self.Ix = cv2.Sobel(self.image, cv2.CV_16S, dx=1, dy=0, ksize=3)
+        self.Iy = cv2.Sobel(self.image, cv2.CV_16S, dx=0, dy=1, ksize=3)
+        self.Ix = cv2.convertScaleAbs(self.Ix)
+        self.Iy = cv2.convertScaleAbs(self.Iy)
 
 if __name__ == '__main__':
 
@@ -27,7 +36,11 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     for file_name in image_paths:
         image = cv2.imread(f'{input_dir}/{file_name}')
-        harris = HarrisCornerDetector(image)
+
+        # harris corner detection
+        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
+        harris.denoise(window_size=5, sigma=1)
+        harris.compute_derivatives()
 
 
         break

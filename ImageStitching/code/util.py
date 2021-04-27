@@ -20,3 +20,9 @@ def save_img(path, image):
         return
     cv2.imwrite(path, image)
     print(f'{path} saved')
+
+def show_img(window_name, image):
+    uint_img = image.astype(np.uint8)
+    cv2.imshow(window_name, uint_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
