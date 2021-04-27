@@ -35,14 +35,14 @@ def warp(image, focal_length, output_path=None):
 if __name__ == '__main__':
     
     # parse command line arguments
-    # Usage: python3 cylindrical_warping <input> <output> [focal]
+    # Usage: python3 cylindrical_warping.py <input> <output> [focal]
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="directory of the input images")
     parser.add_argument("output", help="directory of the output images")
     parser.add_argument("-f", "--focal", type=float, help="focal length")
     args = parser.parse_args()
     input_dir = args.input     # eg. ../data/input/parrington
-    output_dir = args.output   # eg. ../data/output/parrington
+    output_dir = args.output   # eg. ../data/warped/parrington
     focal_length = args.focal if args.focal is not None else 704.916
 
     # read images, warp
