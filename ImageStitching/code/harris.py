@@ -16,10 +16,26 @@ class HarrisCornerDetector:
         self.image = cv2.GaussianBlur(self.image, (window_size, window_size), sigmaX=sigma)
     
     def compute_derivatives(self):
-        self.Ix = cv2.Sobel(self.image, cv2.CV_16S, dx=1, dy=0, ksize=3)
-        self.Iy = cv2.Sobel(self.image, cv2.CV_16S, dx=0, dy=1, ksize=3)
-        self.Ix = cv2.convertScaleAbs(self.Ix)
-        self.Iy = cv2.convertScaleAbs(self.Iy)
+        self.Ix = cv2.Sobel(self.image, cv2.CV_64F, dx=1, dy=0, ksize=3)
+        self.Iy = cv2.Sobel(self.image, cv2.CV_64F, dx=0, dy=1, ksize=3)
+        self.Ix = cv2.convertScaleAbs(self.Ix).astype(np.float64)
+        self.Iy = cv2.convertScaleAbs(self.Iy).astype(np.float64)
+        self.Ixx = self.Ix ** 2
+        self.Ixy = self.Ix * self.Iy
+        self.Iyy = self.Iy ** 2
+    
+    def gaussian_conv(self, window_size, sigma):
+        # get Gaussian kernel
+        kernel = cv2.getGaussianKernel(ksize=window_size, sigma=sigma)
+        kernel = kernel @ kernel.T
+
+        # compute the sum of the products of derivatives
+        self.Sxx = cv2.filter2D(self.Ixx.astype(np.float64), cv2.CV_64F, kernel)
+        self.Sxy = cv2.filter2D(self.Ixy.astype(np.float64), cv2.CV_64F, kernel)
+        self.Syy = cv2.filter2D(self.Iyy.astype(np.float64), cv2.CV_64F, kernel)
+        self.Sxx = cv2.convertScaleAbs(self.Sxx).astype(np.float64)
+        self.Sxy = cv2.convertScaleAbs(self.Sxy).astype(np.float64)
+        self.Syy = cv2.convertScaleAbs(self.Syy).astype(np.float64)
 
 if __name__ == '__main__':
 
@@ -41,6 +57,6 @@ if __name__ == '__main__':
         harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
         harris.denoise(window_size=5, sigma=1)
         harris.compute_derivatives()
-
+        harris.gaussian_conv(window_size=5, sigma=1)
 
         break
