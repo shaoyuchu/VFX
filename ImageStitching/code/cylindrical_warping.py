@@ -1,18 +1,14 @@
 import numpy as np
 import cv2
 import argparse
-import os
-
-def image_paths_under_dir(input_dir):
-    image_paths = os.listdir(input_dir)
-    image_paths = list(filter(lambda f: (f.endswith('.JPG') or f.endswith('.jpg') or f.endswith('.png')), image_paths))
-    image_paths.sort()
-    return image_paths
+from util import *
 
 def warp(image, focal_length, output_path=None):
     warped_image = np.zeros_like(image)
     height, width = warped_image.shape[0], warped_image.shape[1]
     center_y, center_x = height // 2, width // 2
+    mk_parent_dir(output_path)
+
     # inverse warping
     for warped_y in range(height):
         for warped_x in range(width):
@@ -24,11 +20,9 @@ def warp(image, focal_length, output_path=None):
                 warped_image[warped_y, warped_x, :] = image[y, x, :]
             else:
                 warped_image[warped_y, warped_x, :] = np.zeros(3)
+
     # save image
-    if output_path is not None:
-        cv2.imwrite(output_path, warped_image)
-        print(f'{output_path} saved')
-    
+    save_img(output_path, warped_image)
     return warped_image
 
 
@@ -37,9 +31,9 @@ if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 cylindrical_warping.py <input> <output> [focal]
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="directory of the input images")
-    parser.add_argument("output", help="directory of the output images")
-    parser.add_argument("-f", "--focal", type=float, help="focal length")
+    parser.add_argument('input', help='directory of the input images')
+    parser.add_argument('output', help='directory of the output images')
+    parser.add_argument('-f', '--focal', type=float, help='focal length')
     args = parser.parse_args()
     input_dir = args.input     # eg. ../data/input/parrington
     output_dir = args.output   # eg. ../data/warped/parrington
