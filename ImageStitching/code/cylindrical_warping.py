@@ -43,5 +43,4 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     for i in range(len(image_paths)):
         image = cv2.imread(f'{input_dir}/{image_paths[i]}')
-        warp(image, focal_length, output_path=f'{output_dir}/{image_paths[i]}')
-
+        warped = warp(image, focal_length, output_path=f'{output_dir}/{image_paths[i]}')
