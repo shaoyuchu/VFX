@@ -54,19 +54,13 @@ def draw_match_line(image, next_image, match_map, feature, path=None):
     ax1 = fig.add_subplot(1,2,2)
     plt.imshow(image)
 
-    # plt.figure()
-    # ax1 = plt.subplot(121)
-    # plt.imshow(next_image)
-    # ax2 = plt.subplot(122)
-    # plt.imshow(image)
-
 
     for i in range(len(match_map)):
         if match_map[i][0] == 0 and match_map[i][1] == 0:
             continue
         xyA = (match_map[i][1], match_map[i][0])
         xyB = (feature[i][1], feature[i][0]) 
-        # print(str(xyA)+" to "+str(xyB))
+        # print(str(xyB)+" to "+str(xyA))
         coordsA = "data"
         coordsB = "data"
         con = ConnectionPatch(xyB, xyA, coordsA, coordsB, axesA=ax1, axesB=ax2, color="red")
