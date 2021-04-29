@@ -14,11 +14,11 @@ class HarrisCornerDetector:
         self.height, self.width = self.unblurred.shape
         mk_parent_dir(output_path)
     
-    def get_feature_map(self, guassian_window_size, gaussian_sigma, harris_k, nms_window_size, feature_map_path=None):
-        harris.denoise(window_size=guassian_window_size, sigma=gaussian_sigma)
-        harris.derivatives()
-        harris.gaussian_conv(window_size=guassian_window_size, sigma=gaussian_sigma)
-        harris.feature_response(k=harris_k, nms_window_size=nms_window_size, feature_map_path=feature_map_path)
+    def get_feature_map(self, guassian_window_size, gaussian_sigma, harris_k, nms_window_size, desc_window_size, feature_map_path=None):
+        self.denoise(window_size=guassian_window_size, sigma=gaussian_sigma)
+        self.derivatives()
+        self.gaussian_conv(window_size=guassian_window_size, sigma=gaussian_sigma)
+        return self.feature_response(k=harris_k, nms_window_size=nms_window_size, desc_window_size=desc_window_size, feature_map_path=feature_map_path)
 
     def denoise(self, window_size, sigma):
         self.image = cv2.GaussianBlur(self.unblurred, (window_size, window_size), sigmaX=sigma)
@@ -45,25 +45,32 @@ class HarrisCornerDetector:
         self.Sxy = cv2.convertScaleAbs(self.Sxy).astype(np.float64)
         self.Syy = cv2.convertScaleAbs(self.Syy).astype(np.float64)
     
-    def feature_response(self, k, nms_window_size, feature_map_path=None):
+    def feature_response(self, k, nms_window_size, desc_window_size, feature_map_path=None):
         # k should be between 0.04 and 0.06
         det = self.Sxx * self.Syy - self.Sxy**2
         trace = self.Sxx + self.Syy
         response = det - k * trace**2
         thresh = np.percentile(response, 99)
         feature = (response > thresh)
-        feature = self.non_maximal_suppression(response, feature, nms_window_size)
+        feature, description, feature_point = self.non_maximal_suppression(response, feature, nms_window_size, desc_window_size)
 
         # show the image with feature points marked
         if feature_map_path is not None:
             mark_on_img(self.unblurred, feature, path=feature_map_path)
+
+        return feature, description, feature_point
     
-    def non_maximal_suppression(self, response, feature_map, window_size):
+    def non_maximal_suppression(self, response, feature_map, window_size, desc_window_size):
         # check if window size is odd
         assert(window_size % 2 == 1)
+        assert(desc_window_size % 2 == 1)
 
         # check every feature point
         margin = window_size // 2
+        desc_margin = desc_window_size // 2
+        feature_desc = np.empty([self.height, self.width, desc_window_size**2])
+        feature_point = []
+
         for r in range(self.height):
             for c in range(self.width):
                 # continue if not feature point
@@ -78,17 +85,26 @@ class HarrisCornerDetector:
                 window_max = np.max(response[up:down+1, left:right+1])
                 if response[r, c] < window_max:
                     feature_map[r, c] = False
-        return feature_map
+                # create feature description
+                else:
+                    feature_point.append([r,c])
+                    if (r - desc_margin) < 0 or (r + desc_margin) > self.height-1:
+                        continue
+                    if (c - desc_margin) < 0 or (c + desc_margin) > self.width-1:
+                        continue
+                    feature_desc[r,c] = self.unblurred[r-desc_margin:r+desc_margin+1, c-desc_margin:c+desc_margin+1].flatten()
+        return feature_map, feature_desc, feature_point
 
 
 guassian_window_size = 5
 gaussian_sigma = 3
 harris_k = 0.05
 non_maximal_window_size = 15
+descriptor_window_size = 11
 if __name__ == '__main__':
 
     # parse command line arguments
-    # Usage: python3 cylindrical_warping.py <input> <output>
+    # Usage: python3 harris.py <input> <output>
     parser = argparse.ArgumentParser()
     parser.add_argument('input', help='directory of the input images')
     parser.add_argument('output', help='directory of the output images')
@@ -101,4 +117,4 @@ if __name__ == '__main__':
     for file_name in image_paths:
         image = cv2.imread(f'{input_dir}/{file_name}')
         harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
-        feature_map = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, f'{output_dir}/feature_{file_name}')
+        feature_map, feature_desc, feature_point = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
