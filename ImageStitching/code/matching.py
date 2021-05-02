@@ -254,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument('stitch', help='directory of the stitched images')
     args = parser.parse_args()
     input_dir = args.input     # eg. ../data/warped/parrington
-    output_dir = args.output   # eg. ../data/harris/parrington_test
+    output_dir = args.output   # eg. ../data/harris/parrington
     match_dir = args.match    # eg. ../data/matched/parrington
     stitch_dir = args.stitch  # eg. ../data/stitched/parrington
 
