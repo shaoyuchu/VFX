@@ -14,8 +14,8 @@ class Matching:
         self.image_amount = len(descriptors)
         self.output_dir = output_dir
         self.stitch_dir = stitch_dir
-        mk_parent_dir(output_dir)
-        mk_parent_dir(stitch_dir)
+        mk_dir(output_dir)
+        mk_dir(stitch_dir)
 
     def process(self):
         # creat a blank canvas for final image
@@ -238,7 +238,7 @@ class Matching:
 
 repeat_k = 100
 sample_amount = 4
-threshold = 10
+threshold = 20
 if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 matching.py <input> <output> <match> <stitch>

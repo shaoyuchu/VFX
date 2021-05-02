@@ -17,6 +17,12 @@ def mk_parent_dir(path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def mk_dir(path):
+    if path is None:
+        return
+    if not os.path.exists(path):
+        os.makedirs(path)
+
 def save_img(path, image):
     if path is None:
         return
