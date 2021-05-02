@@ -54,7 +54,7 @@ class Matching:
 
             # best match distance is much smaller than second best match distance
             if second_min_dist > 0:    
-                if (min_dist/second_min_dist) <= 0.75:
+                if (min_dist/second_min_dist) <= matching_threshold:
                     self.match_list[i] = [int(match_r), int(match_c)]
 
 
@@ -238,6 +238,7 @@ class Matching:
 
 repeat_k = 100
 sample_amount = 4
+matching_threshold = 0.75
 threshold = 20
 if __name__ == '__main__':
     # parse command line arguments
