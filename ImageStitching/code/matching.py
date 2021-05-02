@@ -1,3 +1,7 @@
+# -----
+# For DLT: https://github.com/Fishified/Tracker3D/blob/master/DLT.py
+# For RANSAC: https://tigercosmos.xyz/post/2020/05/cv/image-stitching/
+# -----
 import numpy as np
 import cv2
 import argparse
