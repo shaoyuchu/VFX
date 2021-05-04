@@ -55,10 +55,12 @@ def mark_on_img(image, map, path=None):
 def draw_match_line(image, next_image, match_map, feature, path=None):
     fig = plt.figure()
     ax2 = fig.add_subplot(1,2,1)
-    plt.imshow(next_image)
+    next_image = cv2.cvtColor(next_image, cv2.COLOR_RGB2BGR)
+    plt.imshow(next_image, cmap='rainbow')
 
     ax1 = fig.add_subplot(1,2,2)
-    plt.imshow(image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    plt.imshow(image, cmap='rainbow')
 
 
     for i in range(len(match_map)):

@@ -14,8 +14,8 @@ def warp(image, focal_length, output_path=None):
         for warped_x in range(width):
             x = np.tan((warped_x - center_x) / focal_length) * focal_length + center_x
             y = (warped_y - center_y) * np.sqrt((x - center_x)**2 + focal_length**2) / focal_length + center_y
-            x = round(x)
-            y = round(y)
+            x = int(x)
+            y = int(y)
             if x >= 0 and x < width and y >= 0 and y < height:
                 warped_image[warped_y, warped_x, :] = image[y, x, :]
             else:

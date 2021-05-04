@@ -85,7 +85,7 @@ class Matching:
             if np.linalg.matrix_rank(H) < 3:
                 continue
             error, inlier, inliers_pair = self.get_error(H, next_img_match, img_feature)
-            if error < min_error:
+            if error < min_error and len(inliers_pair) > 0:
                 min_error = error
                 max_inlier = inlier
                 best_H = H.copy()
@@ -240,10 +240,10 @@ class Matching:
                     self.result_figure[r, sc+2*linear_wid+c] = temp
 
 
-repeat_k = 100
+repeat_k = 80
 sample_amount = 4
-matching_threshold = 0.75
-threshold = 20
+matching_threshold = 0.74
+threshold = 2500
 if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 matching.py <input> <output> <match> <stitch>
