@@ -135,7 +135,9 @@ class HarrisCornerDetector:
                         bin_array[pos] += (mag_temp[i,j] / 45) * (45 - (angle_temp[i,j] % 45))
                         pos = (pos+1) % bin_number
                         bin_array[pos] += (mag_temp[i,j] / 45) * (angle_temp[i,j] % 45)
-                bin_array = bin_array / np.linalg.norm(bin_array) # normalize
+                array_norm = np.linalg.norm(bin_array)
+                array_norm = np.where(array_norm != 0, array_norm, 1) # resolve divided by zero
+                bin_array = bin_array / array_norm # normalize
                 bin_vector[temp: temp+bin_number] = bin_array
                 temp += bin_number
 
@@ -155,13 +157,13 @@ class HarrisCornerDetector:
 
 gaussian_sigma = 3
 harris_k = 0.05
-# guassian_window_size = 31
-# non_maximal_window_size = 89
-# descriptor_window_size = 121
+guassian_window_size = 31
+non_maximal_window_size = 89
+descriptor_window_size = 17
 
-guassian_window_size = 5
-non_maximal_window_size = 15
-descriptor_window_size = 17 # mod 4 == 1
+# guassian_window_size = 5
+# non_maximal_window_size = 15
+# descriptor_window_size = 17 # mod 4 == 1
 if __name__ == '__main__':
 
     # parse command line arguments

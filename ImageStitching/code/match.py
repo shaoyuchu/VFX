@@ -168,10 +168,10 @@ class Matching:
         return errors, inliers
 
 
-repeat_k = 30
+repeat_k = 1000
 sample_amount = 4
-matching_threshold = 0.76
-inlier_threshold = 0.5
+matching_threshold = 0.7
+inlier_threshold = 30
 if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 matching.py <input> <output> <match> <stitch>
@@ -190,13 +190,13 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     image_list, feature_list, HOG_list = [], [], []
     for index, file_name in enumerate(image_paths):
-        if index < 2:
-            image = cv2.imread(f'{input_dir}/{file_name}')
-            image_list.append(image)
-            harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
-            feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
-            feature_list.append(feature_point)
-            HOG_list.append(descriptor_hist)
+        # if index < 2:
+        image = cv2.imread(f'{input_dir}/{file_name}')
+        image_list.append(image)
+        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
+        feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
+        feature_list.append(feature_point)
+        HOG_list.append(descriptor_hist)
 
     # match feature and match image
     match = Matching(image_list, feature_list, HOG_list, output_dir=f'{match_dir}', stitch_dir=f'{stitch_dir}')
