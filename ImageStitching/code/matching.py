@@ -11,13 +11,15 @@ from util import *
 from harris import *
 
 class Matching:
-    def __init__(self, images, features, descriptors, output_dir=None, stitch_dir=None):
+    def __init__(self, images, features, descriptors, m_vector_list, orient_list, output_dir=None, stitch_dir=None):
         self.images = images
         self.features = features
         self.descriptors = descriptors
         self.image_amount = len(descriptors)
         self.output_dir = output_dir
         self.stitch_dir = stitch_dir
+        self.m_vector_list = m_vector_list
+        self.orient_list = orient_list
         mk_dir(output_dir)
         mk_dir(stitch_dir)
 
@@ -29,17 +31,18 @@ class Matching:
         for index, image in enumerate(self.images):
             if index == (self.image_amount-1): # skip last image
                 break
-            self.feature_matching(self.features[index], self.features[index+1], self.descriptors[index], self.descriptors[index+1])
+            self.feature_matching(self.features[index], self.features[index+1], self.descriptors[index], self.descriptors[index+1], self.orient_list[index], self.orient_list[index+1])
             draw_match_line(self.images[index], self.images[index+1], self.match_list, self.features[index], path=f'{self.output_dir}/{index}')
-            H_matrix, inliers_pair = self.Ransac(self.match_list, self.features[index])
+            H_matrix, inliers_pair = self.Ransac_new(self.match_list, self.features[index], image)
             # self.blend_single(self.images[index], self.images[index+1], inliers_pair, path=f'{self.stitch_dir}/{index}')
-            self.blend(self.images[index], self.images[index+1], inliers_pair)
+            self.blend(self.images[index], self.images[index+1], inliers_pair, H_matrix)
         uint_img = self.result_figure.astype(np.uint8)
         save_img(f'{self.stitch_dir}/result.jpg', uint_img)
 
-    def feature_matching(self, feature_points, next_feature_points, descriptor, next_descriptor):
+    def feature_matching(self, feature_points, next_feature_points, descriptor, next_descriptor, orientList, nextOrientList):
         # find matching feature descriptors for a pair of images
         self.match_list = np.zeros((len(feature_points),2))
+        self.matched_count = 0
 
         for i in range(len(feature_points)):
             r, c = feature_points[i][0], feature_points[i][1]
@@ -47,6 +50,18 @@ class Matching:
             match_r = match_c = -1
 
             for j in range(len(next_feature_points)):
+                # orientation
+                degree_diff = orientList[i] - nextOrientList[j]
+                rot = np.array([[math.cos(degree_diff), -math.sin(degree_diff)], [math.sin(degree_diff), math.cos(degree_diff)]])
+                descriptor[r, c] = np.flip(descriptor[r, c], axis=0)
+                
+                copy_new_descriptor_array = descriptor.copy()
+                for k in range(len(descriptor[r, c])):
+                    new_descriptor_array = np.reshape(descriptor[r, c, k], (-1, 2))
+                    v2 = np.dot(rot, new_descriptor_array)
+                    copy_new_descriptor_array[v2[0], v2[1]] = new_descriptor_array
+                descriptor[r, c] = np.flip(copy_new_descriptor_array, axis=0)
+
                 next_r, next_c = next_feature_points[j][0], next_feature_points[j][1]
                 dist = np.linalg.norm(descriptor[r, c] - next_descriptor[next_r, next_c])
                 if dist < second_min_dist:
@@ -60,6 +75,7 @@ class Matching:
             if second_min_dist > 0:    
                 if (min_dist/second_min_dist) <= matching_threshold:
                     self.match_list[i] = [int(match_r), int(match_c)]
+                    self.matched_count += 1
 
 
     def Ransac(self, next_img_match, img_feature):
@@ -82,6 +98,7 @@ class Matching:
 
             # calculate H using normalized DLT
             H = self.DLT(sample_xy, sample_uv)
+
             if np.linalg.matrix_rank(H) < 3:
                 continue
             error, inlier, inliers_pair = self.get_error(H, next_img_match, img_feature)
@@ -93,6 +110,28 @@ class Matching:
 
         # print(min_error, max_inlier)
         return best_H, best_inliers_pair
+
+    def Ransac_new(self, next_img_match, img_feature, im_src):
+        featureList = np.zeros((self.matched_count, 2))
+        matchedList = np.zeros((self.matched_count, 2))
+        tempNum = 0
+        for i in range(len(next_img_match)):
+            if next_img_match[i][0] == 0 and next_img_match[i][1] == 0:
+                continue
+            featureList[tempNum] = [img_feature[i][0], img_feature[i][1]]
+            matchedList[tempNum] = [next_img_match[i][0], next_img_match[i][1]]
+            tempNum += 1
+
+        sample_xy = np.array(featureList, dtype=np.float)
+        sample_uv = np.array(matchedList, dtype=np.float)
+        H, mask = cv2.findHomography(sample_xy, sample_uv)
+        # im_dst = cv2.warpPerspective(im_src, H, (im_src.shape[1], im_src.shape[0]))
+        # print(im_dst)
+
+        error, inlier, inliers_pair = self.get_error(H, next_img_match, img_feature)
+        # print(len(inliers_pair))
+
+        return H, inliers_pair
             
     def DLT(self, xy, uv):
         xy = np.asarray(xy)
@@ -201,7 +240,7 @@ class Matching:
         uint_img = blank_image.astype(np.uint8)
         cv2.imwrite(f'{path}.jpg', uint_img)
 
-    def blend(self, feature_image, matching_image, inliers_pair):
+    def blend(self, feature_image, matching_image, inliers_pair, H_matrix):
         shift_r, shift_c, temp_x, temp_y  = 0, 0, 0, 0
         for inliers in inliers_pair:
             temp_x += inliers[2] - inliers[0]
@@ -215,9 +254,12 @@ class Matching:
         blending_col = w_feature-abs(shift_c)
 
         self.result_figure = np.hstack((np.zeros((h_result, abs(shift_c), 3)), self.result_figure))
-        self.result_figure = np.vstack((np.zeros((abs(shift_r), w_result+abs(shift_c), 3)), self.result_figure))
+        if shift_r >= 0:
+            self.result_figure = np.vstack((np.zeros((abs(shift_r), w_result+abs(shift_c), 3)), self.result_figure))
+        else:
+            self.result_figure = np.vstack((self.result_figure, np.zeros((abs(shift_r), w_result+abs(shift_c), 3))))
         h_result, w_result = self.result_figure.shape[:2]
-        
+
         # stitch image is higher
         if shift_r >= 0:
             linear_wid = int(blending_col/5)
@@ -236,14 +278,15 @@ class Matching:
             self.result_figure[sr:h_match+sr, 0:sc+2*linear_wid] = matching_image[0:h_match, 0:sc+2*linear_wid]
             for r in range(sr,h_match):
                 for c in range(0,linear_wid):
-                    temp = (feature_image[r-sr,2*linear_wid+c] * (c / linear_wid)) + (matching_image[r,sc+2*linear_wid+c] * (1 - c / linear_wid))
+                    temp = (feature_image[r,2*linear_wid+c] * (c / linear_wid)) + (matching_image[r-sr,sc+2*linear_wid+c] * (1 - c / linear_wid))
                     self.result_figure[r, sc+2*linear_wid+c] = temp
 
 
 repeat_k = 80
 sample_amount = 4
-matching_threshold = 0.74
-threshold = 2500
+matching_threshold = 0.76
+# threshold = 3500
+threshold = 300
 if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 matching.py <input> <output> <match> <stitch>
@@ -260,18 +303,20 @@ if __name__ == '__main__':
 
     # apply harris corner detection
     image_paths = image_paths_under_dir(input_dir)
-    image_list, feature_list, desc_list = [], [], []
+    image_list, feature_list, desc_list, m_vector_list, orient_list = [], [], [], [], []
     for index, file_name in enumerate(image_paths):
-        # if index < 3:
-        image = cv2.imread(f'{input_dir}/{file_name}')
-        image_list.append(image)
-        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
-        feature_map, feature_desc, feature_point = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
-        feature_list.append(feature_point)
-        desc_list.append(feature_desc)
+        if index < 3:
+            image = cv2.imread(f'{input_dir}/{file_name}')
+            image_list.append(image)
+            harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
+            feature_map, feature_point = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
+            feature_list.append(feature_point)
+            desc_list.append(feature_desc)
+            m_vector_list.append(m_vector)
+            orient_list.append(orientation)
 
     # match feature and match image
-    match = Matching(image_list, feature_list, desc_list, output_dir=f'{match_dir}', stitch_dir=f'{stitch_dir}')
+    match = Matching(image_list, feature_list, desc_list, m_vector_list, orient_list, output_dir=f'{match_dir}', stitch_dir=f'{stitch_dir}')
     match.process()
 
 

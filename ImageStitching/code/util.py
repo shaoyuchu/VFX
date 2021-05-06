@@ -52,7 +52,7 @@ def mark_on_img(image, map, path=None):
         plt.show()
 
 
-def draw_match_line(image, next_image, match_map, feature, path=None):
+def draw_match_line(image, next_image, match_prev, match_next, path=None):
     fig = plt.figure()
     ax2 = fig.add_subplot(1,2,1)
     next_image = cv2.cvtColor(next_image, cv2.COLOR_RGB2BGR)
@@ -63,11 +63,9 @@ def draw_match_line(image, next_image, match_map, feature, path=None):
     plt.imshow(image, cmap='rainbow')
 
 
-    for i in range(len(match_map)):
-        if match_map[i][0] == 0 and match_map[i][1] == 0:
-            continue
-        xyA = (match_map[i][1], match_map[i][0])
-        xyB = (feature[i][1], feature[i][0]) 
+    for i in range(len(match_prev)):
+        xyA = (match_next[i][1], match_next[i][0])
+        xyB = (match_prev[i][1], match_prev[i][0]) 
         # print(str(xyB)+" to "+str(xyA))
         coordsA = "data"
         coordsB = "data"

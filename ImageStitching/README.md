@@ -42,9 +42,9 @@ For example, the warped image is shown below.
 
 ### Feature matching
 
-First, get the feature descriptor of each feature point. The feature descriptor size is determined by `descriptor_window_size` in `harris.py` .
+First, get the feature descriptor of each feature point. The feature descriptor size is determined by `descriptor_window_size` in `harris.py`. Go through every image and compare the feature descriptor of current image with the next image using `np.linalg.norm`.  We aimed to find the matched feature points with the minimal difference.
 
-Go through every image and compare the feature descriptor of current image with the next image using `np.linalg.norm`.  We aimed to find the matched feature point with the minimal difference.
+To reduce the amount of matching pairs, minimal match point difference needs to be 0.75 times smaller than second minimal match point difference.
 
 ### Image matching
 
