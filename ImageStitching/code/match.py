@@ -34,18 +34,19 @@ class Matching:
             # # Testing image
             # new_img = np.zeros((self.images[1].shape[0], self.images[1].shape[1], 3), np.uint8)
             # for r in range(len(image)):
-            # 	for c in range(len(image[0])):
-            # 		new_pos = np.dot(H, [r,c,1])
-            # 		position = (new_pos/new_pos[2])[0:2]
-            # 		new_pos_0 = int(new_pos[0])
-            # 		new_pos_1 = int(new_pos[1])
-            # 		if new_pos_0 <= 0 or new_pos_1 <= 0 or new_pos_0 >= len(image) or new_pos_1 >= len(image[0]):
-            # 			continue
-            # 		new_img[new_pos_0, new_pos_1] = self.images[1][r,c]
+            #     for c in range(len(image[0])):
+            #         new_pos = np.dot(H, [r,c,1])
+            #         position = (new_pos/new_pos[2])[0:2]
+            #         new_pos_0 = int(round(position[0]))
+            #         new_pos_1 = int(round(position[1]))
+            #         if new_pos_0 <= 0 or new_pos_1 <= 0 or new_pos_0 >= len(image) or new_pos_1 >= len(image[0]):
+            #             # print(new_pos_0, new_pos_1)
+            #             continue
+            #         new_img[new_pos_0, new_pos_1] = self.images[1][r,c]
             # show_img("result", new_img)
 
 
-            # self.blend(self.images[index], self.images[index+1], H, inliers_pair)
+            self.blend(H, self.images[index], self.images[index+1])
         # uint_img = self.result_figure.astype(np.uint8)
         # save_img(f'{self.stitch_dir}/result.jpg', uint_img)
 
@@ -168,9 +169,69 @@ class Matching:
         return errors, inliers
 
 
-repeat_k = 1000
+    def blend(self, H, img, next_img):
+        min_r, min_c, max_r, max_c = 0, 0, 0, 0
+        h_result, w_result = self.result_figure.shape[:2]
+
+        # Save the new positions (pixels transfer by matrix H) to an array
+        move_position_array = np.zeros((next_img.shape[0], next_img.shape[1], 2))
+        for r in range(len(img)):
+            for c in range(len(img[0])):
+                pos = np.dot(H, [r,c,1])
+                norm_pos = (pos/pos[2])[0:2]
+                new_pos_r = int(round(norm_pos[0]))
+                new_pos_c = int(round(norm_pos[1]))
+                move_position_array[r,c] = [new_pos_r, new_pos_c]
+        # find the min and max position
+        min_r = np.amin(move_position_array[:,:,0])
+        max_r = np.amax(move_position_array[:,:,0])
+        min_c = np.amin(move_position_array[:,:,1])
+        max_c = np.amax(move_position_array[:,:,1])
+        
+        # print(next_img.shape[:2])
+
+        # print(min_r, max_r)
+        # print(min_c, max_c)
+        # print("===")
+
+        final_move_row = move_position_array[:,:,0].copy()
+        final_move_col = move_position_array[:,:,1].copy()
+
+        # Expand the final image column
+        if min_c < 0:
+            self.result_figure = np.hstack((np.zeros((h_result, int(abs(min_c)), 3)), self.result_figure))
+            final_move_col = move_position_array[:,:,1] + int(abs(min_c))
+        if max_c >= img.shape[1]:
+            self.result_figure = np.hstack((self.result_figure, np.zeros((h_result, int(abs(max_c)-img.shape[1]), 3))))
+        # Expand the final image row
+        if min_r < 0:
+            self.result_figure = np.vstack((np.zeros((int(abs(min_r)+1), w_result+int(abs(min_c)), 3)), self.result_figure))
+            final_move_row = move_position_array[:,:,0] + int(abs(min_r))
+        if max_r >= img.shape[0]:
+            self.result_figure = np.vstack((self.result_figure, np.zeros((int(abs(max_r)-img.shape[0]+1), w_result+int(abs(min_c)), 3))))
+
+        # # find the min and max position
+        # min_r = np.amin(final_move_row[:,:])
+        # max_r = np.amax(final_move_row[:,:])
+        # min_c = np.amin(final_move_col[:,:])
+        # max_c = np.amax(final_move_col[:,:])
+        # print(min_r, max_r)
+        # print(min_c, max_c)
+        blending_width = int((next_img.shape[1] + min_c)/5)
+
+        for r in range(len(next_img)):
+            for c in range(len(next_img[0])):
+                if c < len(next_img[0]) - 3*blending_width:
+                    temp_r = int(final_move_row[r,c])
+                    temp_c = int(final_move_col[r,c])
+                    self.result_figure[temp_r,temp_c] = next_img[r, c]
+
+        show_img("result", self.result_figure)
+
+
+repeat_k = 100
 sample_amount = 4
-matching_threshold = 0.7
+matching_threshold = 0.72
 inlier_threshold = 30
 if __name__ == '__main__':
     # parse command line arguments
@@ -190,13 +251,13 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     image_list, feature_list, HOG_list = [], [], []
     for index, file_name in enumerate(image_paths):
-        # if index < 2:
-        image = cv2.imread(f'{input_dir}/{file_name}')
-        image_list.append(image)
-        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
-        feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
-        feature_list.append(feature_point)
-        HOG_list.append(descriptor_hist)
+        if index < 2:
+	        image = cv2.imread(f'{input_dir}/{file_name}')
+	        image_list.append(image)
+	        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
+	        feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
+	        feature_list.append(feature_point)
+	        HOG_list.append(descriptor_hist)
 
     # match feature and match image
     match = Matching(image_list, feature_list, HOG_list, output_dir=f'{match_dir}', stitch_dir=f'{stitch_dir}')

@@ -157,13 +157,13 @@ class HarrisCornerDetector:
 
 gaussian_sigma = 3
 harris_k = 0.05
-guassian_window_size = 31
-non_maximal_window_size = 89
-descriptor_window_size = 17
+# guassian_window_size = 31
+# non_maximal_window_size = 89
+# descriptor_window_size = 17
 
-# guassian_window_size = 5
-# non_maximal_window_size = 15
-# descriptor_window_size = 17 # mod 4 == 1
+guassian_window_size = 5
+non_maximal_window_size = 15
+descriptor_window_size = 17 # mod 4 == 1
 if __name__ == '__main__':
 
     # parse command line arguments
