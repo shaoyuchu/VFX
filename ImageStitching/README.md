@@ -129,7 +129,7 @@ The feature matching result is shown as below:
 
 In order to find the best transformation matrix, we use RANSAC (Random Sample Consensus) for robust fitting models in the presence of data outliers.
 
-**Step 1**: Draw out 4 random feature points for calculating Homography **H**.
+**Step 1**: Draw out 4 random feature points for calculating Homography **H**.  
 
 **Step 2**: Calculate the H matrix using the equation:
 $$
