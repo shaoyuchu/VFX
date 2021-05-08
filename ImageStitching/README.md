@@ -10,15 +10,15 @@
 Run the following command to reproduce the result.
 
 ```python
-python3 cylindrical_warping.py ../data/input/parrington ../data/warped/parrington
-python3 matching.py ../data/warped/parrington ../data/harris/parrington ../data/matched/parrington ../data/stitched/parrington
+python3 cylindrical_warping.py ../data/input/library ../data/warped/library
+python3 match.py ../data/warped/library ../data/harris/library../data/matched/parrington ../data/stitched/library
 ```
 
 `cylindrical_warping.py` warps the images to the cylinder coordinate.
 
-`matching.py` finds the feature points on a image and saves it to the "harris/parrington" directory. Then, it finds the matching feature point pairs and saves it to the "matched/parrington" directory. Finally, the code stitches the images together with the matching feature data, and saves it to the "stitched/parrington" directory.  
+`match.py` finds the feature points on a image and saves it to the "harris/library" directory. Then, it finds the matching feature point pairs and saves it to the "matched/library" directory. Finally, the code stitches the images together with the matching feature data, and saves it to the "stitched/library" directory.  
 
-The final panorama image is called result.jpg, and is saved in the stitched/parrington directory.
+The final panorama image is called result.jpg, and is saved in the "stitched/library" directory.
 
 ### Warp to Cylinder Coordinate
 
@@ -34,9 +34,9 @@ y = \frac{y^\prime - y_c}{f} \cdot \sqrt{(x - x_c)^2+f^2} + y_c.
 $$
 For example, the warped image is shown below.
 
-| Original | Warped |
-| :------: | :----: |
-|          |        |
+|               Original               |                Warped                |
+| :----------------------------------: | :----------------------------------: |
+| ![](https://i.imgur.com/pFcVdck.jpg) | ![](https://i.imgur.com/MBmhiSG.jpg) |
 
 ### Feature Detection
 
@@ -72,15 +72,36 @@ Here, we select $k$ to be $0.05$.
 
 For example, the detected feature points are labeled red in the image below.
 
-| Features |
-| :------: |
-|          |
+|                 Features                  |
+| :---------------------------------------: |
+| ![image](https://i.imgur.com/kgxQHSm.jpg) |
 
 ### Feature Descriptor
 
-We chose SIFT descriptor to store our feature data since it is rotation invariant. 
+We chose SIFT descriptor to store our feature data since it is rotation invariant. For each feature point, find the dominant orientation of a window around the keypoint. Calculate the neighbor histogram of gradients within `descriptor_window_size`. Aligns the window to that orientation by subtracting this dominant orientation from all other orientations in the window. In this way the keypoint is "orientation invariant".
 
 ![image](https://i.imgur.com/FsN8rAX.png)
+
+**Step 1**: Filter the image with a kernel to find the horizontal and vertical gradients:
+$$
+g_x = image[r+1,c] - image[r-1,c] \\
+g_x = image[r,c+1] - image[r,c-1] \\
+$$
+Calculate the gradient value and angle of each pixel:
+$$
+g = \sqrt{g_x^2+g_y^2}\\
+\theta = \arctan \frac{g_y} {g_x}
+$$
+**Step 2**: Subtract the angle of each pixel in the window with feature point angle (dominate angle).
+
+**Step 3**: Divide the window into a 4x4 array. Use a 8 orientation bins to save the gradient histogram in each section. A gradients’s contribution is divided among the nearby histograms based on distance. If 
+it’s halfway between two histogram locations, it gives a percentage of contribution to both orientation.
+
+![image](https://i.imgur.com/6IHVcr4.png)
+
+For more detail description, here is a reference slide: http://vision.stanford.edu/teaching/cs131_fall1718/files/07_DoG_SIFT.pdf
+
+
 
 ### Feature Matching
 

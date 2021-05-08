@@ -166,7 +166,9 @@ class Matching:
         move_position_array = np.zeros((next_img.shape[0], next_img.shape[1], 2))
         for r in range(len(img)):
             for c in range(len(img[0])):
-                pos = np.dot(H_list[index], [r,c,1])
+                for idx in range(index, -1, -1):
+                    pos = np.dot(H_list[index], [r,c,1])
+                    pos = np.where(pos!= 0, pos, 0.001) # resolve divided by zero
                 norm_pos = (pos/pos[2])[0:2]
                 new_pos_r = int(round(norm_pos[0]))
                 new_pos_c = int(round(norm_pos[1]))
@@ -233,7 +235,7 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     image_list, feature_list, HOG_list = [], [], []
     for index, file_name in enumerate(image_paths):
-        # if index < 4 and index >= 1:
+        # if index < 5:
         image = cv2.imread(f'{input_dir}/{file_name}')
         image_list.append(image)
         harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
