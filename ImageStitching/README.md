@@ -207,10 +207,9 @@ $$
 
 The final stitching result of five photos of the NTU Library and three photos of the campus view.
 
-|              Result.jpg              |
-| :----------------------------------: |
-| ![](https://i.imgur.com/S4fdcAB.jpg) |
-| ![](https://i.imgur.com/k5CFPWi.jpg) |
+![](https://i.imgur.com/S4fdcAB.jpg)
+
+![](https://i.imgur.com/k5CFPWi.jpg)
 
 ### Other results: 
 
