@@ -138,12 +138,15 @@ $$
 	\omega y_i\prime \\
 	\omega \\
 \end{bmatrix}
+
 =
+
 \begin{bmatrix}
 	h_{00} & h_{01} & h_{02} \\
 	h_{10} & h_{11} & h_{12} \\
 	h_{20} & h_{21} & h_{22} \\
 \end{bmatrix}
+
 \begin{bmatrix}
 	x_i \\
 	y_i \\
@@ -156,10 +159,13 @@ $$
 	x_i & y_i & 1 & 0 & 0 & 0 & -{x_i}{x_i\prime} & -{y_i}{x_i\prime} & -{x_i\prime}\\
 	0 & 0 & 0 & x_i & y_i & 1 & -{x_i}{y_i\prime} & -{y_i}{y_i\prime} & -{y_i\prime}\\
 \end{bmatrix}
+
 \begin{bmatrix}
 	h_{00} \\ h_{01} \\ h_{02} \\ h_{10} \\ h_{11} \\ h_{12} \\ h_{20} \\ h_{21} \\ h_{22} \\
 \end{bmatrix}
+
 =
+
 \begin{bmatrix}
 	0 \\ 0 \\
 \end{bmatrix}
