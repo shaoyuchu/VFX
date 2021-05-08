@@ -10,17 +10,17 @@
 Run the following command to reproduce the result.
 
 ```python
-python3 cylindrical_warping.py ../data/input/library ../data/warped/library -f {Focal_length}
-python3 match.py ../data/warped/library ../data/harris/library../data/matched/parrington ../data/stitched/library
+python3 cylindrical_warping.py ../data/input/roof../data/warped/roof -f {Focal_length}
+python3 match.py ../data/warped/roof ../data/harris/roof../data/matched/roof../data/stitched/roof
 ```
 
 `cylindrical_warping.py` warps the images to the cylinder coordinate.
 
-`match.py` finds the feature points on a image and saves it to the "harris/library" directory. Then, it finds the matching feature point pairs and saves it to the "matched/library" directory. Finally, the code stitches the images together with the matching feature data, and saves it to the "stitched/library" directory.  
+`match.py` finds the feature points on a image and saves it to the "harris/roof" directory. Then, it finds the matching feature point pairs and saves it to the "matched/roof" directory. Finally, the code stitches the images together with the matching feature data, and saves it to the "stitched/roof" directory.  
 
-The final panorama image is called result.jpg, and is saved in the "stitched/library" directory.
+The final panorama image is called result.jpg, and is saved in the "stitched/roof" directory.
 
-> Note: The input images needs to be in right-to-left order. Our original photos are in the data/input/library folder.
+> Note: The input images needs to be in right-to-left order. Our original photos are in the data/input/roof folder.
 
 ### Warp to Cylinder Coordinate
 
