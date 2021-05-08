@@ -22,6 +22,7 @@ class Matching:
     	# creat a blank canvas for final image
         self.result_figure = np.zeros((self.images[0].shape[0], self.images[0].shape[1], 3), np.uint8)
         self.result_figure = np.copy(self.images[0])
+        H_list = []
 
         # go through each image
         for index, image in enumerate(self.images):
@@ -30,25 +31,12 @@ class Matching:
             self.feature_matching(self.features[index], self.features[index+1], self.descriptors[index], self.descriptors[index+1])
             draw_match_line(self.images[index], self.images[index+1], self.match_prev_list, self.match_next_list, path=f'{self.output_dir}/{index}')
             H, inliers_pair = self.Ransac()
-            
-            # # Testing image
-            # new_img = np.zeros((self.images[1].shape[0], self.images[1].shape[1], 3), np.uint8)
-            # for r in range(len(image)):
-            #     for c in range(len(image[0])):
-            #         new_pos = np.dot(H, [r,c,1])
-            #         position = (new_pos/new_pos[2])[0:2]
-            #         new_pos_0 = int(round(position[0]))
-            #         new_pos_1 = int(round(position[1]))
-            #         if new_pos_0 <= 0 or new_pos_1 <= 0 or new_pos_0 >= len(image) or new_pos_1 >= len(image[0]):
-            #             # print(new_pos_0, new_pos_1)
-            #             continue
-            #         new_img[new_pos_0, new_pos_1] = self.images[1][r,c]
-            # show_img("result", new_img)
-
-
-            self.blend(H, self.images[index], self.images[index+1])
-        # uint_img = self.result_figure.astype(np.uint8)
-        # save_img(f'{self.stitch_dir}/result.jpg', uint_img)
+            H_list.append(H)
+            self.blend(H_list, self.images[index], self.images[index+1], index)
+        
+        uint_img = self.result_figure.astype(np.uint8)
+        # show_img("result",uint_img)
+        save_img(f'{self.stitch_dir}/result.jpg', uint_img)
 
     def feature_matching(self, feature_points, next_feature_points, descriptors, next_descriptors):
         # find matching feature descriptors for a pair of images
@@ -160,6 +148,7 @@ class Matching:
 
         for i in range(num_points):
             temp = np.dot(H, all_p1[i])
+            temp = np.where(temp != 0, temp, 0.001) # resolve divided by zero
             estimate_p2[i] = (temp/temp[2])[0:2] # set index 2 to 1 and slice the index 0, 1
         # Compute error
         errors = np.linalg.norm(all_p2 - estimate_p2 , axis=1) ** 2
@@ -169,7 +158,7 @@ class Matching:
         return errors, inliers
 
 
-    def blend(self, H, img, next_img):
+    def blend(self, H_list, img, next_img, index):
         min_r, min_c, max_r, max_c = 0, 0, 0, 0
         h_result, w_result = self.result_figure.shape[:2]
 
@@ -177,7 +166,7 @@ class Matching:
         move_position_array = np.zeros((next_img.shape[0], next_img.shape[1], 2))
         for r in range(len(img)):
             for c in range(len(img[0])):
-                pos = np.dot(H, [r,c,1])
+                pos = np.dot(H_list[index], [r,c,1])
                 norm_pos = (pos/pos[2])[0:2]
                 new_pos_r = int(round(norm_pos[0]))
                 new_pos_c = int(round(norm_pos[1]))
@@ -187,12 +176,9 @@ class Matching:
         max_r = np.amax(move_position_array[:,:,0])
         min_c = np.amin(move_position_array[:,:,1])
         max_c = np.amax(move_position_array[:,:,1])
-        
-        # print(next_img.shape[:2])
 
         # print(min_r, max_r)
         # print(min_c, max_c)
-        # print("===")
 
         final_move_row = move_position_array[:,:,0].copy()
         final_move_col = move_position_array[:,:,1].copy()
@@ -210,26 +196,22 @@ class Matching:
         if max_r >= img.shape[0]:
             self.result_figure = np.vstack((self.result_figure, np.zeros((int(abs(max_r)-img.shape[0]+1), w_result+int(abs(min_c)), 3))))
 
-        # # find the min and max position
-        # min_r = np.amin(final_move_row[:,:])
-        # max_r = np.amax(final_move_row[:,:])
-        # min_c = np.amin(final_move_col[:,:])
-        # max_c = np.amax(final_move_col[:,:])
-        # print(min_r, max_r)
-        # print(min_c, max_c)
         blending_width = int((next_img.shape[1] + min_c)/5)
 
         for r in range(len(next_img)):
-            for c in range(len(next_img[0])):
+            b = 0
+            for c in range(len(next_img[0])- 2*blending_width):        
+                temp_r = int(final_move_row[r,c])
+                temp_c = int(final_move_col[r,c])
                 if c < len(next_img[0]) - 3*blending_width:
-                    temp_r = int(final_move_row[r,c])
-                    temp_c = int(final_move_col[r,c])
                     self.result_figure[temp_r,temp_c] = next_img[r, c]
+                # linear blending
+                else:
+                    self.result_figure[temp_r,temp_c] = next_img[r, c]*(1 - b/blending_width) + self.result_figure[temp_r,temp_c]*(b/blending_width)
+                    b += 1
 
-        show_img("result", self.result_figure)
 
-
-repeat_k = 100
+repeat_k = 80
 sample_amount = 4
 matching_threshold = 0.72
 inlier_threshold = 30
@@ -251,13 +233,13 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     image_list, feature_list, HOG_list = [], [], []
     for index, file_name in enumerate(image_paths):
-        if index < 2:
-	        image = cv2.imread(f'{input_dir}/{file_name}')
-	        image_list.append(image)
-	        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
-	        feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
-	        feature_list.append(feature_point)
-	        HOG_list.append(descriptor_hist)
+        # if index < 4 and index >= 1:
+        image = cv2.imread(f'{input_dir}/{file_name}')
+        image_list.append(image)
+        harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')
+        feature_map, feature_point, descriptor_hist = harris.get_feature_map(guassian_window_size, gaussian_sigma, harris_k, non_maximal_window_size, descriptor_window_size, f'{output_dir}/feature_{file_name}')
+        feature_list.append(feature_point)
+        HOG_list.append(descriptor_hist)
 
     # match feature and match image
     match = Matching(image_list, feature_list, HOG_list, output_dir=f'{match_dir}', stitch_dir=f'{stitch_dir}')
