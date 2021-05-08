@@ -131,7 +131,7 @@ In order to find the best transformation matrix, we use RANSAC (Random Sample Co
 
 **Step 1**: Draw out 4 random feature points for calculating Homography H.
 
-**Step 2**: Calculate the H matrix using the equation:
+**Step 2** : Calculate the H matrix using the equation:  
 $$
 \begin{bmatrix}
 	\omega x_i\prime \\
@@ -164,6 +164,8 @@ $$
 	0 \\ 0 \\
 \end{bmatrix}
 $$
+
+
 **Step 3**: Get the error of the H matrix by calculating the sum product of each feature point and H. If the error is smaller than `inlier_threshol = 20`, consider the matching pair as inlier. 
 
 **Step 4**: Repeat step 1-3  `repeat_k = 100` times. Find the Homography **H** with the largest inlier pair amount.
