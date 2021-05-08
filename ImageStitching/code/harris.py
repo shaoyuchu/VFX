@@ -159,7 +159,7 @@ gaussian_sigma = 3
 harris_k = 0.05
 guassian_window_size = 31
 non_maximal_window_size = 131
-descriptor_window_size = 41
+descriptor_window_size = 29
 
 # guassian_window_size = 5
 # non_maximal_window_size = 15

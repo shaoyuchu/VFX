@@ -20,6 +20,8 @@ python3 match.py ../data/warped/library ../data/harris/library../data/matched/pa
 
 The final panorama image is called result.jpg, and is saved in the "stitched/library" directory.
 
+> Note: The input images needs to be in right-to-left order
+
 ### Warp to Cylinder Coordinate
 
 Let $f$ denote the focal length, and $x_c$, $y_c$ denote the x, y coordinate of the image center. We warp the image by reprojecting them onto a cylinder with the following formula:
@@ -99,18 +101,80 @@ it’s halfway between two histogram locations, it gives a percentage of contrib
 
 ![image](https://i.imgur.com/6IHVcr4.png)
 
-For more detail description, here is a reference slide: http://vision.stanford.edu/teaching/cs131_fall1718/files/07_DoG_SIFT.pdf
+For more detail description, here is some resources: 
+
+http://vision.stanford.edu/teaching/cs131_fall1718/files/07_DoG_SIFT.pdf
+
+https://learnopencv.com/histogram-of-oriented-gradients/
 
 
 
 ### Feature Matching
 
-Go through every image and compare the feature descriptor of current image with the next image using `np.linalg.norm`.  We aimed to find the matched feature points with the minimal difference.
+Go through every image and compare the feature descriptor of current image with the next image using `distance.euclidean`.  We aimed to find the matched feature points with the minimal difference.
 
 To reduce the amount of matching pairs, minimal match point difference needs to be 0.75 times smaller than second minimal match point difference.
 
+We then save the matched pair `[r_current, c_current, r_next, c_next]` to an list. Draw a red line between the matched pair using `matplotlib.pyplot`.
+
+The feature matching result is shown as below:
+
+|           Feature Matching           |
+| :----------------------------------: |
+| ![](https://i.imgur.com/y29pn8c.png) |
+
+
+
 ### Image Matching
+
+In order to find the best transformation matrix, we use RANSAC (Random Sample Consensus) for robust fitting models in the presence of data outliers.
+
+**Step 1**: Draw out 4 random feature points for calculating Homography **H**.
+
+**Step 2**: Calculate the H matrix using the equation:
+$$
+\begin{bmatrix}
+	\omega x_i\prime \\
+	\omega y_i\prime \\
+	\omega \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+	h_{00} & h_{01} & h_{02} \\
+	h_{10} & h_{11} & h_{12} \\
+	h_{20} & h_{21} & h_{22} \\
+\end{bmatrix}
+\begin{bmatrix}
+	x_i \\
+	y_i \\
+	1 \\
+\end{bmatrix}
+$$
+equals to
+$$
+\begin{bmatrix}
+	x_i & y_i & 1 & 0 & 0 & 0 & -{x_i}{x_i\prime} & -{y_i}{x_i\prime} & -{x_i\prime}\\
+	0 & 0 & 0 & x_i & y_i & 1 & -{x_i}{y_i\prime} & -{y_i}{y_i\prime} & -{y_i\prime}\\
+\end{bmatrix}
+\begin{bmatrix}
+	h_{00} \\ h_{01} \\ h_{02} \\ h_{10} \\ h_{11} \\ h_{12} \\ h_{20} \\ h_{21} \\ h_{22} \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+	0 \\ 0 \\
+\end{bmatrix}
+$$
+**Step 3**: Get the error of the H matrix by calculating the sum product of each feature point and H. If the error is smaller than `inlier_threshol = 20`, consider the matching pair as inlier. 
+
+**Step 4**: Repeat step 1-3  `repeat_k = 100` times. Find the Homography **H** with the largest inlier pair amount.
 
 ### Blending
 
+
+
 ### Result
+
+|              Result.jpg              |
+| :----------------------------------: |
+| ![](https://i.imgur.com/S4fdcAB.jpg) |
+

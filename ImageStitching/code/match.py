@@ -215,8 +215,8 @@ class Matching:
 
 repeat_k = 80
 sample_amount = 4
-matching_threshold = 0.72
-inlier_threshold = 30
+matching_threshold = 0.7
+inlier_threshold = 20
 if __name__ == '__main__':
     # parse command line arguments
     # Usage: python3 matching.py <input> <output> <match> <stitch>
