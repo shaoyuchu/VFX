@@ -131,7 +131,7 @@ In order to find the best transformation matrix, we use RANSAC (Random Sample Co
 
 **Step 1**: Draw out 4 random feature points for calculating Homography H.
 
-**Step 2** : Calculate the H matrix using the equation:  
+**Step 2**: Calculate the H matrix using the equation
 $$
 \begin{bmatrix}
 	\omega x_i\prime \\
@@ -151,7 +151,7 @@ $$
 	x_i \\
 	y_i \\
 	1 \\
-\end{bmatrix}
+\end{bmatrix}.
 $$
 equals to
 $$
@@ -168,7 +168,7 @@ $$
 
 \begin{bmatrix}
 	0 \\ 0 \\
-\end{bmatrix}
+\end{bmatrix}.
 $$
 
 
