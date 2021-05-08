@@ -198,7 +198,7 @@ class Matching:
         if max_r >= img.shape[0]:
             self.result_figure = np.vstack((self.result_figure, np.zeros((int(abs(max_r)-img.shape[0]+1), w_result+int(abs(min_c)), 3))))
 
-        blending_width = int((next_img.shape[1] + min_c)/5)
+        blending_width = int((next_img.shape[1] - abs(min_c))/5)
 
         for r in range(len(next_img)):
             b = 0
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     image_paths = image_paths_under_dir(input_dir)
     image_list, feature_list, HOG_list = [], [], []
     for index, file_name in enumerate(image_paths):
-        # if index < 5:
+        # if index <= 3 and index >= 2:
         image = cv2.imread(f'{input_dir}/{file_name}')
         image_list.append(image)
         harris = HarrisCornerDetector(image, output_path=f'{output_dir}/{file_name}')

@@ -158,7 +158,7 @@ class HarrisCornerDetector:
 gaussian_sigma = 3
 harris_k = 0.05
 guassian_window_size = 31
-non_maximal_window_size = 131
+non_maximal_window_size = 133
 descriptor_window_size = 29
 
 # guassian_window_size = 5

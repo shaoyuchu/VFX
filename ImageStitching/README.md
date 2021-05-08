@@ -10,7 +10,7 @@
 Run the following command to reproduce the result.
 
 ```python
-python3 cylindrical_warping.py ../data/input/library ../data/warped/library
+python3 cylindrical_warping.py ../data/input/library ../data/warped/library -f {Focal_length}
 python3 match.py ../data/warped/library ../data/harris/library../data/matched/parrington ../data/stitched/library
 ```
 
@@ -20,7 +20,7 @@ python3 match.py ../data/warped/library ../data/harris/library../data/matched/pa
 
 The final panorama image is called result.jpg, and is saved in the "stitched/library" directory.
 
-> Note: The input images needs to be in right-to-left order
+> Note: The input images needs to be in right-to-left order. Our original photos are in the data/input/library folder.
 
 ### Warp to Cylinder Coordinate
 
@@ -119,7 +119,7 @@ We then save the matched pair `[r_current, c_current, r_next, c_next]` to an lis
 
 The feature matching result is shown as below:
 
-|           Feature Matching           |
+|           Feature matching           |
 | :----------------------------------: |
 | ![](https://i.imgur.com/y29pn8c.png) |
 
@@ -168,13 +168,57 @@ $$
 
 **Step 4**: Repeat step 1-3  `repeat_k = 100` times. Find the Homography **H** with the largest inlier pair amount.
 
+The matrix H between each image was saved to a list for later use.
+
+Reference website: https://tigercosmos.xyz/post/2020/05/cv/image-stitching/
+
 ### Blending
 
+Here we used **Linear blend with constant width** to make the image connection smoothly.
 
+**Step 1**: Go through the matrix H list backward and transfer the pixels. This can preserve the image displacements of previous images.
+
+**Step 2**: Find the minimum and maximum position after the pixel transfer. Enlarge the canvas size using those values.
+
+**Step 3**: Place the pixels onto the canvas, and blend the next-image-pixels with the previous-image-pixels within the `blending_width`.
+$$
+[u_i, v_i] = (1 - \frac{b}{BlendingWidth}) \times [x_i, y_i] + (\frac{b}{BlendingWidth}) \times [{x_i}\prime, {y_i}\prime]
+$$
+
+|         Blending two images          |         Blending two images          |
+| :----------------------------------: | :----------------------------------: |
+| ![](https://i.imgur.com/t2Mfv8i.jpg) | ![](https://i.imgur.com/RWzx4iw.jpg) |
+
+ 
 
 ### Result
+
+The final stitching result of five photos of the NTU Library.
 
 |              Result.jpg              |
 | :----------------------------------: |
 | ![](https://i.imgur.com/S4fdcAB.jpg) |
 
+### Other results: 
+
+#### **1. Parrington**
+
+|               Features               |           Feature matching           |
+| :----------------------------------: | :----------------------------------: |
+| ![](https://i.imgur.com/uSCYZUT.jpg) | ![](https://i.imgur.com/k2PpSmA.png) |
+
+**Image stitching**
+
+![](https://i.imgur.com/Ivk1Ck5.jpg)
+
+
+
+#### **2. grail**
+
+|               Features               |           Feature matching           |
+| :----------------------------------: | :----------------------------------: |
+| ![](https://i.imgur.com/vxTKUNA.jpg) | ![](https://i.imgur.com/zXZytvo.png) |
+
+**Image stitching**
+
+![](https://i.imgur.com/ySEplC7.jpg)
